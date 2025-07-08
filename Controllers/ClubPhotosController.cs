@@ -12,47 +12,47 @@ namespace OynaApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ComputerSpecController : ControllerBase
+    public class ClubPhotosController : ControllerBase
     {
         private readonly OynaDbContext _context;
 
-        public ComputerSpecController(OynaDbContext context)
+        public ClubPhotosController(OynaDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/ComputerSpec
+        // GET: api/ClubPhotos
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ComputerSpec>>> GetComputerSpecs()
+        public async Task<ActionResult<IEnumerable<ClubPhoto>>> GetClubPhotos()
         {
-            return await _context.ComputerSpecs.ToListAsync();
+            return await _context.ClubPhotos.ToListAsync();
         }
 
-        // GET: api/ComputerSpec/5
+        // GET: api/ClubPhotos/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ComputerSpec>> GetComputerSpec(int id)
+        public async Task<ActionResult<ClubPhoto>> GetClubPhoto(int id)
         {
-            var computerSpec = await _context.ComputerSpecs.FindAsync(id);
+            var clubPhoto = await _context.ClubPhotos.FindAsync(id);
 
-            if (computerSpec == null)
+            if (clubPhoto == null)
             {
                 return NotFound();
             }
 
-            return computerSpec;
+            return clubPhoto;
         }
 
-        // PUT: api/ComputerSpec/5
+        // PUT: api/ClubPhotos/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutComputerSpec(int id, ComputerSpec computerSpec)
+        public async Task<IActionResult> PutClubPhoto(int id, ClubPhoto clubPhoto)
         {
-            if (id != computerSpec.Id)
+            if (id != clubPhoto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(computerSpec).State = EntityState.Modified;
+            _context.Entry(clubPhoto).State = EntityState.Modified;
 
             try
             {
@@ -60,7 +60,7 @@ namespace OynaApi.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ComputerSpecExists(id))
+                if (!ClubPhotoExists(id))
                 {
                     return NotFound();
                 }
@@ -73,36 +73,36 @@ namespace OynaApi.Controllers
             return NoContent();
         }
 
-        // POST: api/ComputerSpec
+        // POST: api/ClubPhotos
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ComputerSpec>> PostComputerSpec(ComputerSpec computerSpec)
+        public async Task<ActionResult<ClubPhoto>> PostClubPhoto(ClubPhoto clubPhoto)
         {
-            _context.ComputerSpecs.Add(computerSpec);
+            _context.ClubPhotos.Add(clubPhoto);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetComputerSpec", new { id = computerSpec.Id }, computerSpec);
+            return CreatedAtAction("GetClubPhoto", new { id = clubPhoto.Id }, clubPhoto);
         }
 
-        // DELETE: api/ComputerSpec/5
+        // DELETE: api/ClubPhotos/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteComputerSpec(int id)
+        public async Task<IActionResult> DeleteClubPhoto(int id)
         {
-            var computerSpec = await _context.ComputerSpecs.FindAsync(id);
-            if (computerSpec == null)
+            var clubPhoto = await _context.ClubPhotos.FindAsync(id);
+            if (clubPhoto == null)
             {
                 return NotFound();
             }
 
-            _context.ComputerSpecs.Remove(computerSpec);
+            _context.ClubPhotos.Remove(clubPhoto);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool ComputerSpecExists(int id)
+        private bool ClubPhotoExists(int id)
         {
-            return _context.ComputerSpecs.Any(e => e.Id == id);
+            return _context.ClubPhotos.Any(e => e.Id == id);
         }
     }
 }

@@ -12,47 +12,47 @@ namespace OynaApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class HallsController : ControllerBase
     {
         private readonly OynaDbContext _context;
 
-        public AuthController(OynaDbContext context)
+        public HallsController(OynaDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Auth
+        // GET: api/Halls
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AuthModel>>> GetAuthModels()
+        public async Task<ActionResult<IEnumerable<Hall>>> GetHalls()
         {
-            return await _context.AuthModels.ToListAsync();
+            return await _context.Halls.ToListAsync();
         }
 
-        // GET: api/Auth/5
+        // GET: api/Halls/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AuthModel>> GetAuthModel(int id)
+        public async Task<ActionResult<Hall>> GetHall(int id)
         {
-            var authModel = await _context.AuthModels.FindAsync(id);
+            var hall = await _context.Halls.FindAsync(id);
 
-            if (authModel == null)
+            if (hall == null)
             {
                 return NotFound();
             }
 
-            return authModel;
+            return hall;
         }
 
-        // PUT: api/Auth/5
+        // PUT: api/Halls/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAuthModel(int id, AuthModel authModel)
+        public async Task<IActionResult> PutHall(int id, Hall hall)
         {
-            if (id != authModel.Id)
+            if (id != hall.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(authModel).State = EntityState.Modified;
+            _context.Entry(hall).State = EntityState.Modified;
 
             try
             {
@@ -60,7 +60,7 @@ namespace OynaApi.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!AuthModelExists(id))
+                if (!HallExists(id))
                 {
                     return NotFound();
                 }
@@ -73,36 +73,36 @@ namespace OynaApi.Controllers
             return NoContent();
         }
 
-        // POST: api/Auth
+        // POST: api/Halls
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<AuthModel>> PostAuthModel(AuthModel authModel)
+        public async Task<ActionResult<Hall>> PostHall(Hall hall)
         {
-            _context.AuthModels.Add(authModel);
+            _context.Halls.Add(hall);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAuthModel", new { id = authModel.Id }, authModel);
+            return CreatedAtAction("GetHall", new { id = hall.Id }, hall);
         }
 
-        // DELETE: api/Auth/5
+        // DELETE: api/Halls/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAuthModel(int id)
+        public async Task<IActionResult> DeleteHall(int id)
         {
-            var authModel = await _context.AuthModels.FindAsync(id);
-            if (authModel == null)
+            var hall = await _context.Halls.FindAsync(id);
+            if (hall == null)
             {
                 return NotFound();
             }
 
-            _context.AuthModels.Remove(authModel);
+            _context.Halls.Remove(hall);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool AuthModelExists(int id)
+        private bool HallExists(int id)
         {
-            return _context.AuthModels.Any(e => e.Id == id);
+            return _context.Halls.Any(e => e.Id == id);
         }
     }
 }

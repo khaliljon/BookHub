@@ -49,7 +49,17 @@ namespace OynaApi.Controllers
         {
             if (id != booking.Id)
             {
-                return BadRequest();
+                return BadRequest("ID в URL не совпадает с ID объекта.");
+            }
+
+            if (booking.TimeEnd <= booking.TimeStart)
+            {
+                return BadRequest("Время окончания должно быть больше времени начала.");
+            }
+
+            if (booking.TotalPrice < 0)
+            {
+                return BadRequest("Цена должна быть положительной.");
             }
 
             _context.Entry(booking).State = EntityState.Modified;
@@ -78,12 +88,22 @@ namespace OynaApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Booking>> PostBooking(Booking booking)
         {
+            if (booking.TimeEnd <= booking.TimeStart)
+            {
+                return BadRequest("Время окончания должно быть больше времени начала.");
+            }
+
+            if (booking.TotalPrice < 0)
+            {
+                return BadRequest("Цена должна быть положительной.");
+            }
+
             booking.CreatedAt = DateTime.UtcNow;
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetBooking", new { id = booking.Id }, booking);
+            return CreatedAtAction(nameof(GetBooking), new { id = booking.Id }, booking);
         }
 
         // DELETE: api/Bookings/5

@@ -1,12 +1,26 @@
-﻿namespace OynaApi.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace OynaApi.Models
 {
+    [Table("tariffs")]
     public class Tariff
     {
+        [Column("id")]
         public int Id { get; set; }
+
+        [Column("club_id")]
         public int ClubId { get; set; }
+
+        [Column("name")]
         public string Name { get; set; }
+
+        [Column("description")]
         public string Description { get; set; }
+
+        [Column("price_per_hour")]
         public decimal PricePerHour { get; set; }
+
+        [Column("is_night_tariff")]
         public bool IsNightTariff { get; set; }
     }
 }

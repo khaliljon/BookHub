@@ -49,7 +49,12 @@ namespace OynaApi.Controllers
         {
             if (id != payment.Id)
             {
-                return BadRequest();
+                return BadRequest("ID в URL не совпадает с ID объекта.");
+            }
+
+            if (payment.Amount < 0)
+            {
+                return BadRequest("Сумма должна быть положительной.");
             }
 
             _context.Entry(payment).State = EntityState.Modified;
@@ -78,10 +83,15 @@ namespace OynaApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Payment>> PostPayment(Payment payment)
         {
+            if (payment.Amount < 0)
+            {
+                return BadRequest("Сумма должна быть положительной.");
+            }
+
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPayment", new { id = payment.Id }, payment);
+            return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, payment);
         }
 
         // DELETE: api/Payments/5
