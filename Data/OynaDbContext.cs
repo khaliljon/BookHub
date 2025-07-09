@@ -19,6 +19,5 @@ namespace OynaApi.Data
         public DbSet<ClubPhoto> ClubPhotos { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<Tariff> Tariffs { get; set; }
-        public DbSet<AuthModel> AuthModels { get; set; }
     }
 }

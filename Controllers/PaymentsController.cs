@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
@@ -43,7 +42,6 @@ namespace OynaApi.Controllers
         }
 
         // PUT: api/Payments/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPayment(int id, Payment payment)
         {
@@ -54,7 +52,7 @@ namespace OynaApi.Controllers
 
             if (payment.Amount < 0)
             {
-                return BadRequest("Сумма должна быть положительной.");
+                return BadRequest("Сумма платежа должна быть положительной.");
             }
 
             _context.Entry(payment).State = EntityState.Modified;
@@ -79,19 +77,18 @@ namespace OynaApi.Controllers
         }
 
         // POST: api/Payments
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Payment>> PostPayment(Payment payment)
         {
             if (payment.Amount < 0)
             {
-                return BadRequest("Сумма должна быть положительной.");
+                return BadRequest("Сумма платежа должна быть положительной.");
             }
 
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, payment);
+            return CreatedAtAction("GetPayment", new { id = payment.Id }, payment);
         }
 
         // DELETE: api/Payments/5

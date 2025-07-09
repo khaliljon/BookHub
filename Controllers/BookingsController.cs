@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
@@ -43,7 +42,6 @@ namespace OynaApi.Controllers
         }
 
         // PUT: api/Bookings/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBooking(int id, Booking booking)
         {
@@ -55,11 +53,6 @@ namespace OynaApi.Controllers
             if (booking.TimeEnd <= booking.TimeStart)
             {
                 return BadRequest("Время окончания должно быть больше времени начала.");
-            }
-
-            if (booking.TotalPrice < 0)
-            {
-                return BadRequest("Цена должна быть положительной.");
             }
 
             _context.Entry(booking).State = EntityState.Modified;
@@ -84,7 +77,6 @@ namespace OynaApi.Controllers
         }
 
         // POST: api/Bookings
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Booking>> PostBooking(Booking booking)
         {
@@ -93,17 +85,12 @@ namespace OynaApi.Controllers
                 return BadRequest("Время окончания должно быть больше времени начала.");
             }
 
-            if (booking.TotalPrice < 0)
-            {
-                return BadRequest("Цена должна быть положительной.");
-            }
-
             booking.CreatedAt = DateTime.UtcNow;
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetBooking), new { id = booking.Id }, booking);
+            return CreatedAtAction("GetBooking", new { id = booking.Id }, booking);
         }
 
         // DELETE: api/Bookings/5

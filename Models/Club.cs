@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OynaApi.Models
 {
@@ -31,5 +32,9 @@ namespace OynaApi.Models
 
         [Column("is_deleted")]
         public bool IsDeleted { get; set; }
+
+        public ICollection<Hall> Halls { get; set; }
+        public ICollection<Tariff> Tariffs { get; set; }
+        public ICollection<ClubPhoto> ClubPhotos { get; set; }
     }
 }

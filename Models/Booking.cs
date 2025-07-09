@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OynaApi.Models
@@ -12,11 +13,20 @@ namespace OynaApi.Models
         [Column("user_id")]
         public int UserId { get; set; }
 
+        [ForeignKey("UserId")]
+        public User User { get; set; }
+
         [Column("seat_id")]
         public int SeatId { get; set; }
 
+        [ForeignKey("SeatId")]
+        public Seat Seat { get; set; }
+
         [Column("tariff_id")]
         public int? TariffId { get; set; }
+
+        [ForeignKey("TariffId")]
+        public Tariff Tariff { get; set; }
 
         [Column("date")]
         public DateTime Date { get; set; }
@@ -35,5 +45,7 @@ namespace OynaApi.Models
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
+
+        public ICollection<Payment> Payments { get; set; }
     }
 }

@@ -12,6 +12,9 @@ namespace OynaApi.Models
         [Column("club_id")]
         public int ClubId { get; set; }
 
+        [ForeignKey("ClubId")]
+        public Club Club { get; set; }
+
         [Column("photo_url")]
         public string PhotoUrl { get; set; }
 

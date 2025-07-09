@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OynaApi.Models
 {
@@ -11,6 +12,9 @@ namespace OynaApi.Models
         [Column("club_id")]
         public int ClubId { get; set; }
 
+        [ForeignKey("ClubId")]
+        public Club Club { get; set; }
+
         [Column("name")]
         public string Name { get; set; }
 
@@ -22,5 +26,7 @@ namespace OynaApi.Models
 
         [Column("is_night_tariff")]
         public bool IsNightTariff { get; set; }
+
+        public ICollection<Booking> Bookings { get; set; }
     }
 }

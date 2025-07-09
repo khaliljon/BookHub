@@ -12,6 +12,9 @@ namespace OynaApi.Models
         [Column("user_id")]
         public int? UserId { get; set; }
 
+        [ForeignKey("UserId")]
+        public User User { get; set; }
+
         [Column("action")]
         public string Action { get; set; }
 
@@ -25,5 +28,3 @@ namespace OynaApi.Models
         public DateTime CreatedAt { get; set; }
     }
 }
-
-

@@ -12,6 +12,9 @@ namespace OynaApi.Models
         [Column("seat_id")]
         public int SeatId { get; set; }
 
+        [ForeignKey("SeatId")]
+        public Seat Seat { get; set; }
+
         [Column("cpu")]
         public string CPU { get; set; }
 

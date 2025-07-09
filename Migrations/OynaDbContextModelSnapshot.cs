@@ -55,31 +55,9 @@ namespace OynaApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("audit_logs");
-                });
-
-            modelBuilder.Entity("OynaApi.Models.AuthModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("password");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("username");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("auth_models");
                 });
 
             modelBuilder.Entity("OynaApi.Models.Booking", b =>
@@ -129,6 +107,12 @@ namespace OynaApi.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SeatId");
+
+                    b.HasIndex("TariffId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("bookings");
                 });
@@ -215,6 +199,8 @@ namespace OynaApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClubId");
+
                     b.ToTable("club_photos");
                 });
 
@@ -262,6 +248,9 @@ namespace OynaApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("SeatId")
+                        .IsUnique();
+
                     b.ToTable("computer_specs");
                 });
 
@@ -293,6 +282,8 @@ namespace OynaApi.Migrations
                         .HasColumnName("name");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
 
                     b.ToTable("halls");
                 });
@@ -330,6 +321,8 @@ namespace OynaApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("notifications");
                 });
 
@@ -365,6 +358,8 @@ namespace OynaApi.Migrations
                         .HasColumnName("payment_status");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
 
                     b.ToTable("payments");
                 });
@@ -403,6 +398,8 @@ namespace OynaApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("HallId");
+
                     b.ToTable("seats");
                 });
 
@@ -438,6 +435,8 @@ namespace OynaApi.Migrations
                         .HasColumnName("price_per_hour");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
 
                     b.ToTable("tariffs");
                 });
@@ -490,6 +489,158 @@ namespace OynaApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("users");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.AuditLog", b =>
+                {
+                    b.HasOne("OynaApi.Models.User", "User")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Booking", b =>
+                {
+                    b.HasOne("OynaApi.Models.Seat", "Seat")
+                        .WithMany("Bookings")
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OynaApi.Models.Tariff", "Tariff")
+                        .WithMany("Bookings")
+                        .HasForeignKey("TariffId");
+
+                    b.HasOne("OynaApi.Models.User", "User")
+                        .WithMany("Bookings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Seat");
+
+                    b.Navigation("Tariff");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.ClubPhoto", b =>
+                {
+                    b.HasOne("OynaApi.Models.Club", "Club")
+                        .WithMany("ClubPhotos")
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Club");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.ComputerSpec", b =>
+                {
+                    b.HasOne("OynaApi.Models.Seat", "Seat")
+                        .WithOne("ComputerSpec")
+                        .HasForeignKey("OynaApi.Models.ComputerSpec", "SeatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Seat");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Hall", b =>
+                {
+                    b.HasOne("OynaApi.Models.Club", "Club")
+                        .WithMany("Halls")
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Club");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Notification", b =>
+                {
+                    b.HasOne("OynaApi.Models.User", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Payment", b =>
+                {
+                    b.HasOne("OynaApi.Models.Booking", "Booking")
+                        .WithMany("Payments")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Seat", b =>
+                {
+                    b.HasOne("OynaApi.Models.Hall", "Hall")
+                        .WithMany("Seats")
+                        .HasForeignKey("HallId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Hall");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Tariff", b =>
+                {
+                    b.HasOne("OynaApi.Models.Club", "Club")
+                        .WithMany("Tariffs")
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Club");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Booking", b =>
+                {
+                    b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Club", b =>
+                {
+                    b.Navigation("ClubPhotos");
+
+                    b.Navigation("Halls");
+
+                    b.Navigation("Tariffs");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Hall", b =>
+                {
+                    b.Navigation("Seats");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Seat", b =>
+                {
+                    b.Navigation("Bookings");
+
+                    b.Navigation("ComputerSpec")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OynaApi.Models.Tariff", b =>
+                {
+                    b.Navigation("Bookings");
+                });
+
+            modelBuilder.Entity("OynaApi.Models.User", b =>
+                {
+                    b.Navigation("AuditLogs");
+
+                    b.Navigation("Bookings");
+
+                    b.Navigation("Notifications");
                 });
 #pragma warning restore 612, 618
         }
