@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -22,40 +23,74 @@ namespace OynaApi.Controllers
 
         // GET: api/Bookings
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Booking>>> GetBookings()
+        public async Task<ActionResult<IEnumerable<BookingDto>>> GetBookings()
         {
-            return await _context.Bookings.ToListAsync();
+            var bookings = await _context.Bookings.ToListAsync();
+
+            var dtos = bookings.Select(b => new BookingDto
+            {
+                Id = b.Id,
+                UserId = b.UserId,
+                SeatId = b.SeatId,
+                TariffId = b.TariffId,
+                Date = b.Date,
+                TimeStart = b.TimeStart,
+                TimeEnd = b.TimeEnd,
+                TotalPrice = b.TotalPrice,
+                Status = b.Status
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/Bookings/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Booking>> GetBooking(int id)
+        public async Task<ActionResult<BookingDto>> GetBooking(int id)
         {
-            var booking = await _context.Bookings.FindAsync(id);
+            var b = await _context.Bookings.FindAsync(id);
 
-            if (booking == null)
-            {
+            if (b == null)
                 return NotFound();
-            }
 
-            return booking;
+            var dto = new BookingDto
+            {
+                Id = b.Id,
+                UserId = b.UserId,
+                SeatId = b.SeatId,
+                TariffId = b.TariffId,
+                Date = b.Date,
+                TimeStart = b.TimeStart,
+                TimeEnd = b.TimeEnd,
+                TotalPrice = b.TotalPrice,
+                Status = b.Status
+            };
+
+            return dto;
         }
 
         // PUT: api/Bookings/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBooking(int id, Booking booking)
+        public async Task<IActionResult> PutBooking(int id, BookingDto dto)
         {
-            if (id != booking.Id)
-            {
+            if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-            }
 
-            if (booking.TimeEnd <= booking.TimeStart)
-            {
+            if (dto.TimeEnd <= dto.TimeStart)
                 return BadRequest("Время окончания должно быть больше времени начала.");
-            }
 
-            _context.Entry(booking).State = EntityState.Modified;
+            var booking = await _context.Bookings.FindAsync(id);
+
+            if (booking == null)
+                return NotFound();
+
+            booking.UserId = dto.UserId;
+            booking.SeatId = dto.SeatId;
+            booking.TariffId = dto.TariffId;
+            booking.Date = dto.Date;
+            booking.TimeStart = dto.TimeStart;
+            booking.TimeEnd = dto.TimeEnd;
+            booking.TotalPrice = dto.TotalPrice;
+            booking.Status = dto.Status;
 
             try
             {
@@ -64,13 +99,9 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!BookingExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
@@ -78,19 +109,30 @@ namespace OynaApi.Controllers
 
         // POST: api/Bookings
         [HttpPost]
-        public async Task<ActionResult<Booking>> PostBooking(Booking booking)
+        public async Task<ActionResult<BookingDto>> PostBooking(BookingDto dto)
         {
-            if (booking.TimeEnd <= booking.TimeStart)
-            {
+            if (dto.TimeEnd <= dto.TimeStart)
                 return BadRequest("Время окончания должно быть больше времени начала.");
-            }
 
-            booking.CreatedAt = DateTime.UtcNow;
+            var booking = new Booking
+            {
+                UserId = dto.UserId,
+                SeatId = dto.SeatId,
+                TariffId = dto.TariffId,
+                Date = dto.Date,
+                TimeStart = dto.TimeStart,
+                TimeEnd = dto.TimeEnd,
+                TotalPrice = dto.TotalPrice,
+                Status = dto.Status,
+                CreatedAt = DateTime.UtcNow
+            };
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetBooking", new { id = booking.Id }, booking);
+            dto.Id = booking.Id;
+
+            return CreatedAtAction(nameof(GetBooking), new { id = booking.Id }, dto);
         }
 
         // DELETE: api/Bookings/5
@@ -99,9 +141,7 @@ namespace OynaApi.Controllers
         {
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)
-            {
                 return NotFound();
-            }
 
             _context.Bookings.Remove(booking);
             await _context.SaveChangesAsync();

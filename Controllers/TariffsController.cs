@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -23,36 +22,61 @@ namespace OynaApi.Controllers
 
         // GET: api/Tariffs
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Tariff>>> GetTariffs()
+        public async Task<ActionResult<IEnumerable<TariffDto>>> GetTariffs()
         {
-            return await _context.Tariffs.ToListAsync();
+            var tariffs = await _context.Tariffs.ToListAsync();
+
+            var dtos = tariffs.Select(t => new TariffDto
+            {
+                Id = t.Id,
+                ClubId = t.ClubId,
+                Name = t.Name,
+                Description = t.Description,
+                PricePerHour = t.PricePerHour,
+                IsNightTariff = t.IsNightTariff
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/Tariffs/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Tariff>> GetTariff(int id)
+        public async Task<ActionResult<TariffDto>> GetTariff(int id)
         {
             var tariff = await _context.Tariffs.FindAsync(id);
 
             if (tariff == null)
-            {
                 return NotFound();
-            }
 
-            return tariff;
+            var dto = new TariffDto
+            {
+                Id = tariff.Id,
+                ClubId = tariff.ClubId,
+                Name = tariff.Name,
+                Description = tariff.Description,
+                PricePerHour = tariff.PricePerHour,
+                IsNightTariff = tariff.IsNightTariff
+            };
+
+            return dto;
         }
 
         // PUT: api/Tariffs/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTariff(int id, Tariff tariff)
+        public async Task<IActionResult> PutTariff(int id, TariffDto dto)
         {
-            if (id != tariff.Id)
-            {
-                return BadRequest();
-            }
+            if (id != dto.Id)
+                return BadRequest("ID в URL не совпадает с ID объекта.");
 
-            _context.Entry(tariff).State = EntityState.Modified;
+            var tariff = await _context.Tariffs.FindAsync(id);
+            if (tariff == null)
+                return NotFound();
+
+            tariff.ClubId = dto.ClubId;
+            tariff.Name = dto.Name;
+            tariff.Description = dto.Description;
+            tariff.PricePerHour = dto.PricePerHour;
+            tariff.IsNightTariff = dto.IsNightTariff;
 
             try
             {
@@ -61,27 +85,33 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!TariffExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
         }
 
         // POST: api/Tariffs
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Tariff>> PostTariff(Tariff tariff)
+        public async Task<ActionResult<TariffDto>> PostTariff(TariffDto dto)
         {
+            var tariff = new Tariff
+            {
+                ClubId = dto.ClubId,
+                Name = dto.Name,
+                Description = dto.Description,
+                PricePerHour = dto.PricePerHour,
+                IsNightTariff = dto.IsNightTariff
+            };
+
             _context.Tariffs.Add(tariff);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetTariff", new { id = tariff.Id }, tariff);
+            dto.Id = tariff.Id;
+
+            return CreatedAtAction(nameof(GetTariff), new { id = tariff.Id }, dto);
         }
 
         // DELETE: api/Tariffs/5
@@ -90,9 +120,7 @@ namespace OynaApi.Controllers
         {
             var tariff = await _context.Tariffs.FindAsync(id);
             if (tariff == null)
-            {
                 return NotFound();
-            }
 
             _context.Tariffs.Remove(tariff);
             await _context.SaveChangesAsync();

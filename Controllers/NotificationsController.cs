@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -23,36 +22,60 @@ namespace OynaApi.Controllers
 
         // GET: api/Notifications
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Notification>>> GetNotifications()
+        public async Task<ActionResult<IEnumerable<NotificationDto>>> GetNotifications()
         {
-            return await _context.Notifications.ToListAsync();
+            var notifications = await _context.Notifications.ToListAsync();
+            var dtos = notifications.Select(n => new NotificationDto
+            {
+                Id = n.Id,
+                UserId = n.UserId,
+                Title = n.Title,
+                Message = n.Message,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/Notifications/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Notification>> GetNotification(int id)
+        public async Task<ActionResult<NotificationDto>> GetNotification(int id)
         {
             var notification = await _context.Notifications.FindAsync(id);
 
             if (notification == null)
-            {
                 return NotFound();
-            }
 
-            return notification;
+            var dto = new NotificationDto
+            {
+                Id = notification.Id,
+                UserId = notification.UserId,
+                Title = notification.Title,
+                Message = notification.Message,
+                IsRead = notification.IsRead,
+                CreatedAt = notification.CreatedAt
+            };
+
+            return dto;
         }
 
         // PUT: api/Notifications/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutNotification(int id, Notification notification)
+        public async Task<IActionResult> PutNotification(int id, NotificationDto dto)
         {
-            if (id != notification.Id)
-            {
-                return BadRequest();
-            }
+            if (id != dto.Id)
+                return BadRequest("ID в URL не совпадает с ID объекта.");
 
-            _context.Entry(notification).State = EntityState.Modified;
+            var notification = await _context.Notifications.FindAsync(id);
+            if (notification == null)
+                return NotFound();
+
+            notification.UserId = dto.UserId;
+            notification.Title = dto.Title;
+            notification.Message = dto.Message;
+            notification.IsRead = dto.IsRead;
+            notification.CreatedAt = dto.CreatedAt;
 
             try
             {
@@ -61,27 +84,33 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!NotificationExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
         }
 
         // POST: api/Notifications
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Notification>> PostNotification(Notification notification)
+        public async Task<ActionResult<NotificationDto>> PostNotification(NotificationDto dto)
         {
+            var notification = new Notification
+            {
+                UserId = dto.UserId,
+                Title = dto.Title,
+                Message = dto.Message,
+                IsRead = dto.IsRead,
+                CreatedAt = dto.CreatedAt
+            };
+
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetNotification", new { id = notification.Id }, notification);
+            dto.Id = notification.Id;
+
+            return CreatedAtAction(nameof(GetNotification), new { id = notification.Id }, dto);
         }
 
         // DELETE: api/Notifications/5
@@ -90,9 +119,7 @@ namespace OynaApi.Controllers
         {
             var notification = await _context.Notifications.FindAsync(id);
             if (notification == null)
-            {
                 return NotFound();
-            }
 
             _context.Notifications.Remove(notification);
             await _context.SaveChangesAsync();

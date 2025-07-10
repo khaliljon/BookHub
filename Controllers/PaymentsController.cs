@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -22,40 +23,65 @@ namespace OynaApi.Controllers
 
         // GET: api/Payments
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Payment>>> GetPayments()
+        public async Task<ActionResult<IEnumerable<PaymentDto>>> GetPayments()
         {
-            return await _context.Payments.ToListAsync();
+            var payments = await _context.Payments.ToListAsync();
+
+            var dtos = payments.Select(p => new PaymentDto
+            {
+                Id = p.Id,
+                BookingId = p.BookingId,
+                Amount = p.Amount,
+                PaymentMethod = p.PaymentMethod,
+                PaymentStatus = p.PaymentStatus,
+                PaidAt = p.PaidAt
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/Payments/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Payment>> GetPayment(int id)
+        public async Task<ActionResult<PaymentDto>> GetPayment(int id)
         {
-            var payment = await _context.Payments.FindAsync(id);
+            var p = await _context.Payments.FindAsync(id);
 
-            if (payment == null)
-            {
+            if (p == null)
                 return NotFound();
-            }
 
-            return payment;
+            var dto = new PaymentDto
+            {
+                Id = p.Id,
+                BookingId = p.BookingId,
+                Amount = p.Amount,
+                PaymentMethod = p.PaymentMethod,
+                PaymentStatus = p.PaymentStatus,
+                PaidAt = p.PaidAt
+            };
+
+            return dto;
         }
 
         // PUT: api/Payments/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPayment(int id, Payment payment)
+        public async Task<IActionResult> PutPayment(int id, PaymentDto dto)
         {
-            if (id != payment.Id)
-            {
+            if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-            }
 
-            if (payment.Amount < 0)
-            {
+            if (dto.Amount < 0)
                 return BadRequest("Сумма платежа должна быть положительной.");
-            }
 
-            _context.Entry(payment).State = EntityState.Modified;
+            var payment = await _context.Payments.FindAsync(id);
+
+            if (payment == null)
+                return NotFound();
+
+            payment.BookingId = dto.BookingId;
+            payment.Amount = dto.Amount;
+            payment.PaymentMethod = dto.PaymentMethod;
+            payment.PaymentStatus = dto.PaymentStatus;
+            payment.PaidAt = dto.PaidAt;
 
             try
             {
@@ -64,13 +90,9 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!PaymentExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
@@ -78,17 +100,26 @@ namespace OynaApi.Controllers
 
         // POST: api/Payments
         [HttpPost]
-        public async Task<ActionResult<Payment>> PostPayment(Payment payment)
+        public async Task<ActionResult<PaymentDto>> PostPayment(PaymentDto dto)
         {
-            if (payment.Amount < 0)
-            {
+            if (dto.Amount < 0)
                 return BadRequest("Сумма платежа должна быть положительной.");
-            }
+
+            var payment = new Payment
+            {
+                BookingId = dto.BookingId,
+                Amount = dto.Amount,
+                PaymentMethod = dto.PaymentMethod,
+                PaymentStatus = dto.PaymentStatus,
+                PaidAt = dto.PaidAt
+            };
 
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPayment", new { id = payment.Id }, payment);
+            dto.Id = payment.Id;
+
+            return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, dto);
         }
 
         // DELETE: api/Payments/5
@@ -97,9 +128,7 @@ namespace OynaApi.Controllers
         {
             var payment = await _context.Payments.FindAsync(id);
             if (payment == null)
-            {
                 return NotFound();
-            }
 
             _context.Payments.Remove(payment);
             await _context.SaveChangesAsync();

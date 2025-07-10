@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -23,36 +23,61 @@ namespace OynaApi.Controllers
 
         // GET: api/AuditLogs
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AuditLog>>> GetAuditLogs()
+        public async Task<ActionResult<IEnumerable<AuditLogDto>>> GetAuditLogs()
         {
-            return await _context.AuditLogs.ToListAsync();
+            var logs = await _context.AuditLogs.ToListAsync();
+
+            var dtos = logs.Select(log => new AuditLogDto
+            {
+                Id = log.Id,
+                UserId = log.UserId,
+                Action = log.Action,
+                TableName = log.TableName,
+                RecordId = log.RecordId,
+                CreatedAt = log.CreatedAt
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/AuditLogs/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AuditLog>> GetAuditLog(int id)
+        public async Task<ActionResult<AuditLogDto>> GetAuditLog(int id)
         {
-            var auditLog = await _context.AuditLogs.FindAsync(id);
+            var log = await _context.AuditLogs.FindAsync(id);
 
-            if (auditLog == null)
-            {
+            if (log == null)
                 return NotFound();
-            }
 
-            return auditLog;
+            var dto = new AuditLogDto
+            {
+                Id = log.Id,
+                UserId = log.UserId,
+                Action = log.Action,
+                TableName = log.TableName,
+                RecordId = log.RecordId,
+                CreatedAt = log.CreatedAt
+            };
+
+            return dto;
         }
 
         // PUT: api/AuditLogs/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAuditLog(int id, AuditLog auditLog)
+        public async Task<IActionResult> PutAuditLog(int id, AuditLogDto dto)
         {
-            if (id != auditLog.Id)
-            {
-                return BadRequest();
-            }
+            if (id != dto.Id)
+                return BadRequest("ID в URL не совпадает с ID объекта.");
 
-            _context.Entry(auditLog).State = EntityState.Modified;
+            var log = await _context.AuditLogs.FindAsync(id);
+            if (log == null)
+                return NotFound();
+
+            log.UserId = dto.UserId;
+            log.Action = dto.Action;
+            log.TableName = dto.TableName;
+            log.RecordId = dto.RecordId;
+            log.CreatedAt = dto.CreatedAt;
 
             try
             {
@@ -61,40 +86,44 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!AuditLogExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
         }
 
         // POST: api/AuditLogs
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<AuditLog>> PostAuditLog(AuditLog auditLog)
+        public async Task<ActionResult<AuditLogDto>> PostAuditLog(AuditLogDto dto)
         {
-            _context.AuditLogs.Add(auditLog);
+            var log = new AuditLog
+            {
+                UserId = dto.UserId,
+                Action = dto.Action,
+                TableName = dto.TableName,
+                RecordId = dto.RecordId,
+                CreatedAt = dto.CreatedAt
+            };
+
+            _context.AuditLogs.Add(log);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAuditLog", new { id = auditLog.Id }, auditLog);
+            dto.Id = log.Id;
+
+            return CreatedAtAction(nameof(GetAuditLog), new { id = log.Id }, dto);
         }
 
         // DELETE: api/AuditLogs/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAuditLog(int id)
         {
-            var auditLog = await _context.AuditLogs.FindAsync(id);
-            if (auditLog == null)
-            {
+            var log = await _context.AuditLogs.FindAsync(id);
+            if (log == null)
                 return NotFound();
-            }
 
-            _context.AuditLogs.Remove(auditLog);
+            _context.AuditLogs.Remove(log);
             await _context.SaveChangesAsync();
 
             return NoContent();

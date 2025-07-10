@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -23,36 +22,70 @@ namespace OynaApi.Controllers
 
         // GET: api/Clubs
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Club>>> GetClubs()
+        public async Task<ActionResult<IEnumerable<ClubDto>>> GetClubs()
         {
-            return await _context.Clubs.ToListAsync();
+            var clubs = await _context.Clubs.ToListAsync();
+
+            var dtos = clubs.Select(club => new ClubDto
+            {
+                Id = club.Id,
+                Name = club.Name,
+                City = club.City,
+                Address = club.Address,
+                Description = club.Description,
+                Phone = club.Phone,
+                Email = club.Email,
+                OpeningHours = club.OpeningHours,
+                IsDeleted = club.IsDeleted
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/Clubs/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Club>> GetClub(int id)
+        public async Task<ActionResult<ClubDto>> GetClub(int id)
         {
             var club = await _context.Clubs.FindAsync(id);
 
             if (club == null)
-            {
                 return NotFound();
-            }
 
-            return club;
+            var dto = new ClubDto
+            {
+                Id = club.Id,
+                Name = club.Name,
+                City = club.City,
+                Address = club.Address,
+                Description = club.Description,
+                Phone = club.Phone,
+                Email = club.Email,
+                OpeningHours = club.OpeningHours,
+                IsDeleted = club.IsDeleted
+            };
+
+            return dto;
         }
 
         // PUT: api/Clubs/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutClub(int id, Club club)
+        public async Task<IActionResult> PutClub(int id, ClubDto dto)
         {
-            if (id != club.Id)
-            {
-                return BadRequest();
-            }
+            if (id != dto.Id)
+                return BadRequest("ID в URL не совпадает с ID объекта.");
 
-            _context.Entry(club).State = EntityState.Modified;
+            var club = await _context.Clubs.FindAsync(id);
+            if (club == null)
+                return NotFound();
+
+            club.Name = dto.Name;
+            club.City = dto.City;
+            club.Address = dto.Address;
+            club.Description = dto.Description;
+            club.Phone = dto.Phone;
+            club.Email = dto.Email;
+            club.OpeningHours = dto.OpeningHours;
+            club.IsDeleted = dto.IsDeleted;
 
             try
             {
@@ -61,27 +94,36 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!ClubExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
         }
 
         // POST: api/Clubs
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Club>> PostClub(Club club)
+        public async Task<ActionResult<ClubDto>> PostClub(ClubDto dto)
         {
+            var club = new Club
+            {
+                Name = dto.Name,
+                City = dto.City,
+                Address = dto.Address,
+                Description = dto.Description,
+                Phone = dto.Phone,
+                Email = dto.Email,
+                OpeningHours = dto.OpeningHours,
+                IsDeleted = dto.IsDeleted
+            };
+
             _context.Clubs.Add(club);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetClub", new { id = club.Id }, club);
+            dto.Id = club.Id;
+
+            return CreatedAtAction(nameof(GetClub), new { id = club.Id }, dto);
         }
 
         // DELETE: api/Clubs/5
@@ -90,9 +132,7 @@ namespace OynaApi.Controllers
         {
             var club = await _context.Clubs.FindAsync(id);
             if (club == null)
-            {
                 return NotFound();
-            }
 
             _context.Clubs.Remove(club);
             await _context.SaveChangesAsync();

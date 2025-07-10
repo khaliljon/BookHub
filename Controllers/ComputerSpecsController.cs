@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -23,36 +22,67 @@ namespace OynaApi.Controllers
 
         // GET: api/ComputerSpecs
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ComputerSpec>>> GetComputerSpecs()
+        public async Task<ActionResult<IEnumerable<ComputerSpecDto>>> GetComputerSpecs()
         {
-            return await _context.ComputerSpecs.ToListAsync();
+            var specs = await _context.ComputerSpecs.ToListAsync();
+
+            var dtos = specs.Select(s => new ComputerSpecDto
+            {
+                Id = s.Id,
+                SeatId = s.SeatId,
+                CPU = s.CPU,
+                GPU = s.GPU,
+                RAM = s.RAM,
+                Monitor = s.Monitor,
+                Peripherals = s.Peripherals,
+                UpdatedAt = s.UpdatedAt
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/ComputerSpecs/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ComputerSpec>> GetComputerSpec(int id)
+        public async Task<ActionResult<ComputerSpecDto>> GetComputerSpec(int id)
         {
-            var computerSpec = await _context.ComputerSpecs.FindAsync(id);
+            var spec = await _context.ComputerSpecs.FindAsync(id);
 
-            if (computerSpec == null)
-            {
+            if (spec == null)
                 return NotFound();
-            }
 
-            return computerSpec;
+            var dto = new ComputerSpecDto
+            {
+                Id = spec.Id,
+                SeatId = spec.SeatId,
+                CPU = spec.CPU,
+                GPU = spec.GPU,
+                RAM = spec.RAM,
+                Monitor = spec.Monitor,
+                Peripherals = spec.Peripherals,
+                UpdatedAt = spec.UpdatedAt
+            };
+
+            return dto;
         }
 
         // PUT: api/ComputerSpecs/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutComputerSpec(int id, ComputerSpec computerSpec)
+        public async Task<IActionResult> PutComputerSpec(int id, ComputerSpecDto dto)
         {
-            if (id != computerSpec.Id)
-            {
-                return BadRequest();
-            }
+            if (id != dto.Id)
+                return BadRequest("ID в URL не совпадает с ID объекта.");
 
-            _context.Entry(computerSpec).State = EntityState.Modified;
+            var spec = await _context.ComputerSpecs.FindAsync(id);
+            if (spec == null)
+                return NotFound();
+
+            spec.SeatId = dto.SeatId;
+            spec.CPU = dto.CPU;
+            spec.GPU = dto.GPU;
+            spec.RAM = dto.RAM;
+            spec.Monitor = dto.Monitor;
+            spec.Peripherals = dto.Peripherals;
+            spec.UpdatedAt = dto.UpdatedAt;
 
             try
             {
@@ -61,40 +91,46 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!ComputerSpecExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
         }
 
         // POST: api/ComputerSpecs
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ComputerSpec>> PostComputerSpec(ComputerSpec computerSpec)
+        public async Task<ActionResult<ComputerSpecDto>> PostComputerSpec(ComputerSpecDto dto)
         {
-            _context.ComputerSpecs.Add(computerSpec);
+            var spec = new ComputerSpec
+            {
+                SeatId = dto.SeatId,
+                CPU = dto.CPU,
+                GPU = dto.GPU,
+                RAM = dto.RAM,
+                Monitor = dto.Monitor,
+                Peripherals = dto.Peripherals,
+                UpdatedAt = dto.UpdatedAt
+            };
+
+            _context.ComputerSpecs.Add(spec);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetComputerSpec", new { id = computerSpec.Id }, computerSpec);
+            dto.Id = spec.Id;
+
+            return CreatedAtAction(nameof(GetComputerSpec), new { id = spec.Id }, dto);
         }
 
         // DELETE: api/ComputerSpecs/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteComputerSpec(int id)
         {
-            var computerSpec = await _context.ComputerSpecs.FindAsync(id);
-            if (computerSpec == null)
-            {
+            var spec = await _context.ComputerSpecs.FindAsync(id);
+            if (spec == null)
                 return NotFound();
-            }
 
-            _context.ComputerSpecs.Remove(computerSpec);
+            _context.ComputerSpecs.Remove(spec);
             await _context.SaveChangesAsync();
 
             return NoContent();

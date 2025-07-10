@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -23,36 +22,66 @@ namespace OynaApi.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            var users = await _context.Users.ToListAsync();
+
+            var dtos = users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                PhoneNumber = u.PhoneNumber,
+                Email = u.Email,
+                RegistrationDate = u.RegistrationDate,
+                Balance = u.Balance,
+                Points = u.Points,
+                IsDeleted = u.IsDeleted
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<UserDto>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
 
             if (user == null)
-            {
                 return NotFound();
-            }
 
-            return user;
+            var dto = new UserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber,
+                Email = user.Email,
+                RegistrationDate = user.RegistrationDate,
+                Balance = user.Balance,
+                Points = user.Points,
+                IsDeleted = user.IsDeleted
+            };
+
+            return dto;
         }
 
         // PUT: api/Users/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> PutUser(int id, UserDto dto)
         {
-            if (id != user.Id)
-            {
-                return BadRequest();
-            }
+            if (id != dto.Id)
+                return BadRequest("ID в URL не совпадает с ID объекта.");
 
-            _context.Entry(user).State = EntityState.Modified;
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            user.FullName = dto.FullName;
+            user.PhoneNumber = dto.PhoneNumber;
+            user.Email = dto.Email;
+            user.Balance = dto.Balance;
+            user.Points = dto.Points;
+            user.IsDeleted = dto.IsDeleted;
 
             try
             {
@@ -61,27 +90,36 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!UserExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
         }
 
         // POST: api/Users
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<UserDto>> PostUser(UserDto dto)
         {
+            var user = new User
+            {
+                FullName = dto.FullName,
+                PhoneNumber = dto.PhoneNumber,
+                Email = dto.Email,
+                RegistrationDate = DateTime.UtcNow,
+                Balance = dto.Balance,
+                Points = dto.Points,
+                IsDeleted = dto.IsDeleted
+            };
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            dto.Id = user.Id;
+            dto.RegistrationDate = user.RegistrationDate;
+
+            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, dto);
         }
 
         // DELETE: api/Users/5
@@ -90,9 +128,7 @@ namespace OynaApi.Controllers
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
-            {
                 return NotFound();
-            }
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();

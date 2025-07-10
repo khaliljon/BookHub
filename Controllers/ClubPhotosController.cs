@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OynaApi.Data;
 using OynaApi.Models;
+using OynaApi.Models.Dtos;
 
 namespace OynaApi.Controllers
 {
@@ -23,36 +22,58 @@ namespace OynaApi.Controllers
 
         // GET: api/ClubPhotos
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ClubPhoto>>> GetClubPhotos()
+        public async Task<ActionResult<IEnumerable<ClubPhotoDto>>> GetClubPhotos()
         {
-            return await _context.ClubPhotos.ToListAsync();
+            var photos = await _context.ClubPhotos.ToListAsync();
+
+            var dtos = photos.Select(photo => new ClubPhotoDto
+            {
+                Id = photo.Id,
+                ClubId = photo.ClubId,
+                PhotoUrl = photo.PhotoUrl,
+                Description = photo.Description,
+                UploadedAt = photo.UploadedAt
+            }).ToList();
+
+            return dtos;
         }
 
         // GET: api/ClubPhotos/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ClubPhoto>> GetClubPhoto(int id)
+        public async Task<ActionResult<ClubPhotoDto>> GetClubPhoto(int id)
         {
-            var clubPhoto = await _context.ClubPhotos.FindAsync(id);
+            var photo = await _context.ClubPhotos.FindAsync(id);
 
-            if (clubPhoto == null)
-            {
+            if (photo == null)
                 return NotFound();
-            }
 
-            return clubPhoto;
+            var dto = new ClubPhotoDto
+            {
+                Id = photo.Id,
+                ClubId = photo.ClubId,
+                PhotoUrl = photo.PhotoUrl,
+                Description = photo.Description,
+                UploadedAt = photo.UploadedAt
+            };
+
+            return dto;
         }
 
         // PUT: api/ClubPhotos/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutClubPhoto(int id, ClubPhoto clubPhoto)
+        public async Task<IActionResult> PutClubPhoto(int id, ClubPhotoDto dto)
         {
-            if (id != clubPhoto.Id)
-            {
-                return BadRequest();
-            }
+            if (id != dto.Id)
+                return BadRequest("ID в URL не совпадает с ID объекта.");
 
-            _context.Entry(clubPhoto).State = EntityState.Modified;
+            var photo = await _context.ClubPhotos.FindAsync(id);
+            if (photo == null)
+                return NotFound();
+
+            photo.ClubId = dto.ClubId;
+            photo.PhotoUrl = dto.PhotoUrl;
+            photo.Description = dto.Description;
+            photo.UploadedAt = dto.UploadedAt;
 
             try
             {
@@ -61,40 +82,43 @@ namespace OynaApi.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!ClubPhotoExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
         }
 
         // POST: api/ClubPhotos
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ClubPhoto>> PostClubPhoto(ClubPhoto clubPhoto)
+        public async Task<ActionResult<ClubPhotoDto>> PostClubPhoto(ClubPhotoDto dto)
         {
-            _context.ClubPhotos.Add(clubPhoto);
+            var photo = new ClubPhoto
+            {
+                ClubId = dto.ClubId,
+                PhotoUrl = dto.PhotoUrl,
+                Description = dto.Description,
+                UploadedAt = dto.UploadedAt
+            };
+
+            _context.ClubPhotos.Add(photo);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetClubPhoto", new { id = clubPhoto.Id }, clubPhoto);
+            dto.Id = photo.Id;
+
+            return CreatedAtAction(nameof(GetClubPhoto), new { id = photo.Id }, dto);
         }
 
         // DELETE: api/ClubPhotos/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteClubPhoto(int id)
         {
-            var clubPhoto = await _context.ClubPhotos.FindAsync(id);
-            if (clubPhoto == null)
-            {
+            var photo = await _context.ClubPhotos.FindAsync(id);
+            if (photo == null)
                 return NotFound();
-            }
 
-            _context.ClubPhotos.Remove(clubPhoto);
+            _context.ClubPhotos.Remove(photo);
             await _context.SaveChangesAsync();
 
             return NoContent();
