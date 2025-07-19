@@ -1,13 +1,13 @@
-# OynaApi - Gaming Club Booking System
+# OynaApi - Система Бронирования Игровых Клубов
 
-## 🚀 Quick Start
+## 🚀 Быстрый старт
 
-### Base URL
+### Базовый URL
 ```
 https://localhost:7183/api
 ```
 
-### Authentication
+### Авторизация
 ```http
 POST /api/auth/login
 Content-Type: application/json
@@ -17,24 +17,24 @@ Content-Type: application/json
   "password": "Burbik27092004"
 }
 ```
-**Response:** `{ "token": "jwt_token_here", "user": {...} }`
+**Ответ:** `{ "token": "jwt_token_here", "user": {...} }`
 
-Add to headers: `Authorization: Bearer {token}`
+Добавить в заголовки: `Authorization: Bearer {token}`
 
 ---
 
-## 👤 Authentication Endpoints
+## 👤 Эндпоинты авторизации
 
-### Login
+### Вход
 ```http
 POST /api/auth/login
 {
-  "emailOrPhone": "string",  // Email or phone
+  "emailOrPhone": "string",  // Email или телефон
   "password": "string"
 }
 ```
 
-### Register
+### Регистрация
 ```http
 POST /api/auth/register
 {
@@ -47,19 +47,19 @@ POST /api/auth/register
 
 ---
 
-## 🏢 Clubs
+## 🏢 Клубы
 
-### Get All Clubs
+### Получить все клубы
 ```http
 GET /api/clubs
 ```
 
-### Get Club by ID
+### Получить клуб по ID
 ```http
 GET /api/clubs/{id}
 ```
 
-### Create Club (Admin only)
+### Создать клуб (только админ)
 ```http
 POST /api/clubs
 {
@@ -75,37 +75,37 @@ POST /api/clubs
 
 ---
 
-## 🏛️ Halls
+## 🏛️ Залы
 
-### Get Halls by Club
+### Получить залы по клубу
 ```http
 GET /api/halls?clubId={clubId}
 ```
 
-### Get Hall by ID
+### Получить зал по ID
 ```http
 GET /api/halls/{id}
 ```
 
 ---
 
-## 💺 Seats
+## 💺 Места
 
-### Get Seats by Hall
+### Получить места по залу
 ```http
 GET /api/seats?hallId={hallId}
 ```
 
-### Get Seat by ID
+### Получить место по ID
 ```http
 GET /api/seats/{id}
 ```
 
 ---
 
-## 📅 Bookings
+## 📅 Бронирования
 
-### Create Booking
+### Создать бронирование
 ```http
 POST /api/bookings
 {
@@ -117,26 +117,26 @@ POST /api/bookings
 }
 ```
 
-### Get My Bookings
+### Получить мои бронирования
 ```http
 GET /api/bookings/my
 ```
 
-### Get Booking by ID
+### Получить бронирование по ID
 ```http
 GET /api/bookings/{id}
 ```
 
-### Cancel Booking
+### Отменить бронирование
 ```http
 DELETE /api/bookings/{id}
 ```
 
 ---
 
-## 💳 Payments
+## 💳 Платежи
 
-### Create Payment
+### Создать платеж
 ```http
 POST /api/payments
 {
@@ -146,31 +146,31 @@ POST /api/payments
 }
 ```
 
-### Get My Payments
+### Получить мои платежи
 ```http
 GET /api/payments/my
 ```
 
 ---
 
-## 💰 Tariffs
+## 💰 Тарифы
 
-### Get Tariffs by Club
+### Получить тарифы по клубу
 ```http
 GET /api/tariffs?clubId={clubId}
 ```
 
 ---
 
-## 👤 Users (Admin endpoints)
+## 👤 Пользователи (эндпоинты админа)
 
-### Get All Users
+### Получить всех пользователей
 ```http
 GET /api/users
 Authorization: Bearer {admin_token}
 ```
 
-### Create User
+### Создать пользователя
 ```http
 POST /api/users
 Authorization: Bearer {admin_token}
@@ -185,7 +185,7 @@ Authorization: Bearer {admin_token}
 }
 ```
 
-### Update User
+### Обновить пользователя
 ```http
 PUT /api/users/{id}
 Authorization: Bearer {admin_token}
@@ -200,7 +200,7 @@ Authorization: Bearer {admin_token}
 }
 ```
 
-### Delete User (Physical deletion)
+### Удалить пользователя (мягкое удаление)
 ```http
 DELETE /api/users/{id}
 Authorization: Bearer {superadmin_token}
@@ -208,25 +208,25 @@ Authorization: Bearer {superadmin_token}
 
 ---
 
-## 🔐 Roles & Permissions
+## 🔐 Роли и права доступа
 
-### User Roles
-- **User** - Book seats, view own bookings/payments
-- **Manager** - Manage club bookings, view reports
-- **Admin** - Manage clubs/halls/seats, user management
-- **SuperAdmin** - Full access, delete users
+### Роли пользователей
+- **User** - Бронирование мест, просмотр собственных бронирований/платежей
+- **Manager** - Управление бронированиями клуба, просмотр отчетов
+- **Admin** - Управление клубами/залами/местами, управление пользователями
+- **SuperAdmin** - Полный доступ, удаление пользователей
 
-### Protected Endpoints
-- `🔓 Public` - No auth required
-- `🔒 User` - Requires login  
-- `🔐 Admin` - Admin/SuperAdmin only
-- `⭐ SuperAdmin` - SuperAdmin only
+### Защищенные эндпоинты
+- `🔓 Открытые` - Авторизация не требуется
+- `🔒 Пользователь` - Требуется вход в систему
+- `🔐 Админ` - Только Admin/SuperAdmin
+- `⭐ СуперАдмин` - Только SuperAdmin
 
 ---
 
-## 📱 Common Response Formats
+## 📱 Общие форматы ответов
 
-### Success Response
+### Успешный ответ
 ```json
 {
   "id": 1,
@@ -235,103 +235,97 @@ Authorization: Bearer {superadmin_token}
 }
 ```
 
-### Error Response
+### Ответ с ошибкой
 ```json
 {
   "type": "https://httpstatuses.com/400",
   "title": "Bad Request", 
   "status": 400,
-  "detail": "Error description"
+  "detail": "Описание ошибки"
 }
 ```
 
-### Array Response
+### Ответ массивом
 ```json
 [
-  { "id": 1, "name": "Item 1" },
-  { "id": 2, "name": "Item 2" }
+  { "id": 1, "name": "Элемент 1" },
+  { "id": 2, "name": "Элемент 2" }
 ]
 ```
 
 ---
 
-## 🎯 Key Features
+## 🎯 Ключевые возможности
 
-### Booking Flow
-1. **Login** → Get token
-2. **Browse clubs** → `/api/clubs`
-3. **Select hall** → `/api/halls?clubId={id}`
-4. **Choose seat** → `/api/seats?hallId={id}`
-5. **Create booking** → `/api/bookings`
-6. **Make payment** → `/api/payments`
+### Процесс бронирования
+1. **Вход** → Получить токен
+2. **Просмотр клубов** → `/api/clubs`
+3. **Выбор зала** → `/api/halls?clubId={id}`
+4. **Выбор места** → `/api/seats?hallId={id}`
+5. **Создание бронирования** → `/api/bookings`
+6. **Оплата** → `/api/payments`
 
-### Admin Features
-- User management (CRUD)
-- Club/Hall/Seat management
-- Booking oversight
-- Payment tracking
+### Возможности админа
+- Управление пользователями (CRUD)
+- Управление клубами/залами/местами
+- Контроль бронирований
+- Отслеживание платежей
 
 ---
 
-## 🛠️ Test Credentials
+## 🛠️ Тестовые учетные данные
 
-### SuperAdmin
+### СуперАдмин
 ```
 Email: khalych.kz@gmail.com
-Password: Burbik27092004
-```
-
-### Test User
-```
-Email: test@oyna.kz  
-Password: 123456
+Пароль: Burbik27092004
 ```
 
 ---
 
-## 📊 Status Codes
+## 📊 Коды состояния
 
-- `200` - Success
-- `201` - Created
-- `204` - No Content (successful delete/update)
-- `400` - Bad Request
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not Found
-- `500` - Internal Server Error
+- `200` - Успешно
+- `201` - Создано
+- `204` - Нет содержимого (успешное удаление/обновление)
+- `400` - Неверный запрос
+- `401` - Не авторизован
+- `403` - Запрещено
+- `404` - Не найдено
+- `500` - Внутренняя ошибка сервера
 
 ---
 
-## 🔄 Data Types
+## 🔄 Типы данных
 
-### DateTime Format
+### Формат DateTime
 ```json
 "2025-07-19T14:30:00Z"
 ```
 
-### Time Format
+### Формат времени
 ```json
 "14:30:00"
 ```
 
-### Date Format
+### Формат даты
 ```json
 "2025-07-19"
 ```
 
-### Decimal Format
+### Формат суммы
 ```json
 1000.50
 ```
 
 ---
 
-## 🚨 Important Notes
+## 🚨 Важные примечания
 
-- All timestamps are in UTC
-- Phone numbers should include country code
-- Passwords minimum 6 characters
-- JWT tokens expire in 24 hours
-- Physical deletion for users (no soft delete)
-- Soft deletion for clubs/halls/seats
-- All amounts in tenge (KZT)
+- Все временные метки в UTC
+- Номера телефонов должны включать код страны
+- Пароли минимум 6 символов
+- JWT токены истекают через 24 часа
+- Мягкое удаление для пользователей (IsDeleted = true)
+- Мягкое удаление для клубов/залов/мест
+- Все суммы в тенге (KZT)
