@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using OynaApi.Data;
 using OynaApi.Models;
 using OynaApi.Models.Dtos;
@@ -12,6 +13,7 @@ namespace OynaApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class AuditLogsController : ControllerBase
     {
         private readonly OynaDbContext _context;

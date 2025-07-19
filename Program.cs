@@ -3,22 +3,49 @@ using OynaApi.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using OynaApi.Helpers;
+using OynaApi.Services;
+using OynaApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем DbContext с PostgreSQL
+// PostgreSQL
 builder.Services.AddDbContext<OynaDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Добавляем контроллеры
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 builder.Services.AddControllers();
-
-// Добавляем Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
 
-// Конфигурация для использования JWT
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement()
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
+
+// JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -30,16 +57,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
         };
     });
 
-// Регистрация JwtHelper для использования в контроллерах
-builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddScoped<JwtService>();
 
 var app = builder.Build();
 
-// Настройка пайплайна
+// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЂРѕР»РµР№ РїСЂРё Р·Р°РїСѓСЃРєРµ (СЂРѕР»Рё СЃРѕР·РґР°СЋС‚СЃСЏ С‡РµСЂРµР· SQL СЃРєСЂРёРїС‚)
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<OynaDbContext>();
+    
+    // РЎРѕР·РґР°РµРј СЂРѕР»Рё, РµСЃР»Рё РёС… РЅРµС‚ (СЂРµР·РµСЂРІРЅС‹Р№ СЃРїРѕСЃРѕР±)
+    if (!await context.Roles.AnyAsync())
+    {
+        var roles = new[]
+        {
+            new Role { Name = "Admin", Description = "РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ СЃРёСЃС‚РµРјС‹", IsActive = true },
+            new Role { Name = "Manager", Description = "РњРµРЅРµРґР¶РµСЂ РєР»СѓР±Р°", IsActive = true },
+            new Role { Name = "User", Description = "РћР±С‹С‡РЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ", IsActive = true }
+        };
+        
+        context.Roles.AddRange(roles);
+        await context.SaveChangesAsync();
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -47,13 +93,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Добавляем аутентификацию и авторизацию
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Маппинг контроллеров
 app.MapControllers();
-
-// Запуск приложения
 app.Run();

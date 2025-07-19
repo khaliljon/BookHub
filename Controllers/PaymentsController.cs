@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using OynaApi.Data;
 using OynaApi.Models;
 using OynaApi.Models.Dtos;
@@ -12,6 +14,7 @@ namespace OynaApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PaymentsController : ControllerBase
     {
         private readonly OynaDbContext _context;

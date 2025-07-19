@@ -31,10 +31,10 @@ namespace OynaApi.Models
         [Column("date")]
         public DateTime Date { get; set; }
 
-        [Column("time_start")]
+        [Column("start_time")]
         public TimeSpan TimeStart { get; set; }
 
-        [Column("time_end")]
+        [Column("end_time")]
         public TimeSpan TimeEnd { get; set; }
 
         [Column("total_price")]

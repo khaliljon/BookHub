@@ -11,19 +11,22 @@ namespace OynaApi.Models
         public int Id { get; set; }
 
         [Column("full_name")]
-        public string FullName { get; set; }
+        public string FullName { get; set; } = string.Empty;
 
         [Column("phone_number")]
-        public string PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty;
 
         [Column("email")]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
-        [Column("hashed_password")]
-        public string HashedPassword { get; set; }
+        [Column("password_hash")]
+        public string PasswordHash { get; set; } = string.Empty;
 
-        [Column("registration_date")]
-        public DateTime RegistrationDate { get; set; }
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; }
+
+        [Column("updated_at")]
+        public DateTime UpdatedAt { get; set; }
 
         [Column("balance")]
         public decimal Balance { get; set; }
@@ -34,8 +37,15 @@ namespace OynaApi.Models
         [Column("is_deleted")]
         public bool IsDeleted { get; set; }
 
-        public ICollection<Booking> Bookings { get; set; }
-        public ICollection<Notification> Notifications { get; set; }
-        public ICollection<AuditLog> AuditLogs { get; set; }
+        [Column("managed_club_id")]
+        public int? ManagedClubId { get; set; } // Для менеджеров - ID клуба который они управляют
+
+        // Navigation properties
+        public Club? ManagedClub { get; set; } // Клуб, которым управляет менеджер
+        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public ICollection<Role> Roles { get; set; } = new List<Role>();
     }
 }

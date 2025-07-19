@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using OynaApi.Data;
 using OynaApi.Models;
 using OynaApi.Models.Dtos;
@@ -12,6 +14,7 @@ namespace OynaApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class BookingsController : ControllerBase
     {
         private readonly OynaDbContext _context;
@@ -21,11 +24,22 @@ namespace OynaApi.Controllers
             _context = context;
         }
 
-        // GET: api/Bookings
+        // GET: api/Bookings (свои бронирования или все для админа/менеджера)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookingDto>>> GetBookings()
         {
-            var bookings = await _context.Bookings.ToListAsync();
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager");
+
+            IQueryable<Booking> query = _context.Bookings;
+
+            // Обычные пользователи видят только свои бронирования
+            if (!isAdminOrManager)
+            {
+                query = query.Where(b => b.UserId == currentUserId);
+            }
+
+            var bookings = await query.ToListAsync();
 
             var dtos = bookings.Select(b => new BookingDto
             {
@@ -43,7 +57,7 @@ namespace OynaApi.Controllers
             return dtos;
         }
 
-        // GET: api/Bookings/5
+        // GET: api/Bookings/5 (свое бронирование или админ/менеджер)
         [HttpGet("{id}")]
         public async Task<ActionResult<BookingDto>> GetBooking(int id)
         {

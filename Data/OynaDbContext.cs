@@ -9,6 +9,8 @@ namespace OynaApi.Data
         public OynaDbContext(DbContextOptions<OynaDbContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Club> Clubs { get; set; }
         public DbSet<Hall> Halls { get; set; }
         public DbSet<Seat> Seats { get; set; }
@@ -19,5 +21,37 @@ namespace OynaApi.Data
         public DbSet<ClubPhoto> ClubPhotos { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<Tariff> Tariffs { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Настройка связи многие-ко-многим для User-Role
+            modelBuilder.Entity<UserRole>()
+                .HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserId);
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId);
+
+            // Настройка связи многие-ко-многим через UserRole
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Roles)
+                .WithMany(r => r.Users)
+                .UsingEntity<UserRole>();
+
+            // Заполнение базовых ролей
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = 1, Name = "Admin", Description = "Администратор системы", IsActive = true },
+                new Role { Id = 2, Name = "Manager", Description = "Менеджер клуба", IsActive = true },
+                new Role { Id = 3, Name = "User", Description = "Обычный пользователь", IsActive = true }
+            );
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

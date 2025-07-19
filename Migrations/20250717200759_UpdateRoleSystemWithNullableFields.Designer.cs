@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OynaApi.Data;
@@ -11,9 +12,11 @@ using OynaApi.Data;
 namespace OynaApi.Migrations
 {
     [DbContext(typeof(OynaDbContext))]
-    partial class OynaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250717200759_UpdateRoleSystemWithNullableFields")]
+    partial class UpdateRoleSystemWithNullableFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,7 +43,7 @@ namespace OynaApi.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<int?>("RecordId")
+                    b.Property<int>("RecordId")
                         .HasColumnType("integer")
                         .HasColumnName("record_id");
 
@@ -57,7 +60,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("audit_logs", (string)null);
+                    b.ToTable("audit_logs");
                 });
 
             modelBuilder.Entity("OynaApi.Models.Booking", b =>
@@ -114,7 +117,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("bookings", (string)null);
+                    b.ToTable("bookings");
                 });
 
             modelBuilder.Entity("OynaApi.Models.Club", b =>
@@ -167,7 +170,7 @@ namespace OynaApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("clubs", (string)null);
+                    b.ToTable("clubs");
                 });
 
             modelBuilder.Entity("OynaApi.Models.ClubPhoto", b =>
@@ -201,7 +204,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("ClubId");
 
-                    b.ToTable("club_photos", (string)null);
+                    b.ToTable("club_photos");
                 });
 
             modelBuilder.Entity("OynaApi.Models.ComputerSpec", b =>
@@ -251,7 +254,7 @@ namespace OynaApi.Migrations
                     b.HasIndex("SeatId")
                         .IsUnique();
 
-                    b.ToTable("computer_specs", (string)null);
+                    b.ToTable("computer_specs");
                 });
 
             modelBuilder.Entity("OynaApi.Models.Hall", b =>
@@ -285,7 +288,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("ClubId");
 
-                    b.ToTable("halls", (string)null);
+                    b.ToTable("halls");
                 });
 
             modelBuilder.Entity("OynaApi.Models.Notification", b =>
@@ -323,7 +326,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("notifications", (string)null);
+                    b.ToTable("notifications");
                 });
 
             modelBuilder.Entity("OynaApi.Models.Payment", b =>
@@ -361,7 +364,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.ToTable("payments", (string)null);
+                    b.ToTable("payments");
                 });
 
             modelBuilder.Entity("OynaApi.Models.Role", b =>
@@ -390,7 +393,7 @@ namespace OynaApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("roles", (string)null);
+                    b.ToTable("roles");
 
                     b.HasData(
                         new
@@ -452,7 +455,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("HallId");
 
-                    b.ToTable("seats", (string)null);
+                    b.ToTable("seats");
                 });
 
             modelBuilder.Entity("OynaApi.Models.Tariff", b =>
@@ -490,7 +493,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("ClubId");
 
-                    b.ToTable("tariffs", (string)null);
+                    b.ToTable("tariffs");
                 });
 
             modelBuilder.Entity("OynaApi.Models.User", b =>
@@ -540,7 +543,7 @@ namespace OynaApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("users", (string)null);
+                    b.ToTable("users");
                 });
 
             modelBuilder.Entity("OynaApi.Models.UserRole", b =>
@@ -565,7 +568,7 @@ namespace OynaApi.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("user_roles", (string)null);
+                    b.ToTable("user_roles");
                 });
 
             modelBuilder.Entity("OynaApi.Models.AuditLog", b =>
