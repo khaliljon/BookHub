@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using OynaApi.Models;
 using System;
 
@@ -46,9 +46,10 @@ namespace OynaApi.Data
 
             // Заполнение базовых ролей
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = "Admin", Description = "Администратор системы", IsActive = true },
-                new Role { Id = 2, Name = "Manager", Description = "Менеджер клуба", IsActive = true },
-                new Role { Id = 3, Name = "User", Description = "Обычный пользователь", IsActive = true }
+                new Role { Id = 1, Name = "SuperAdmin", Description = "Суперадминистратор - полный доступ ко всем функциям системы", IsActive = true },
+                new Role { Id = 2, Name = "Admin", Description = "Администратор - управление клубами, залами, местами, тарифами", IsActive = true },
+                new Role { Id = 3, Name = "Manager", Description = "Менеджер клуба - управление бронированиями по своему клубу", IsActive = true },
+                new Role { Id = 4, Name = "User", Description = "Обычный пользователь - бронирование мест", IsActive = true }
             );
 
             base.OnModelCreating(modelBuilder);

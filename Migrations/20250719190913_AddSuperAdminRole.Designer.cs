@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OynaApi.Data;
@@ -11,9 +12,11 @@ using OynaApi.Data;
 namespace OynaApi.Migrations
 {
     [DbContext(typeof(OynaDbContext))]
-    partial class OynaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250719190913_AddSuperAdminRole")]
+    partial class AddSuperAdminRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
