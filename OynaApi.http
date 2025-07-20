@@ -1,4 +1,4 @@
-@OynaApi_HostAddress = http://localhost:5066
+@OynaApi_HostAddress = https://localhost:7183
 
 GET {{OynaApi_HostAddress}}/weatherforecast/
 Accept: application/json

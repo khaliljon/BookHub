@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start React App",
+            "type": "shell",
+            "command": "npm",
+            "args": ["start"],
+            "group": "build",
+            "isBackground": true,
+            "options": {
+                "env": {
+                    "PORT": "3001",
+                    "BROWSER": "none"
+                }
+            },
+            "problemMatcher": {
+                "pattern": [
+                    {
+                        "regexp": "."
+                    }
+                ],
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*webpack.*compiled.*$",
+                    "endsPattern": "^.*webpack.*compiled.*$"
+                }
+            }
+        }
+    ]
+}
