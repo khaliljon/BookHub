@@ -4,7 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider, useAuth } from './utils/AuthContext';
 import LoginPage from './pages/LoginPage';
-import DashboardPageFixed from './pages/DashboardPageFixed';
+import DashboardPage from './pages/DashboardPage';
 import { UserRoles } from './types';
 
 // Создаем тему Material-UI
@@ -58,7 +58,7 @@ const App: React.FC = () => {
               path="/dashboard/*" 
               element={
                 <ProtectedRoute requiredRoles={[UserRoles.SUPER_ADMIN, UserRoles.ADMIN]}>
-                  <DashboardPageFixed />
+                  <DashboardPage />
                 </ProtectedRoute>
               } 
             />

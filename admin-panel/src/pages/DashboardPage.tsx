@@ -30,18 +30,18 @@ import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   AccountCircle,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import { UserRoles } from '../types';
-
-// Временные компоненты-заглушки
-const OverviewPage = () => <div>Обзор системы</div>;
-const UsersPage = () => <div>Управление пользователями</div>;
-const ClubsPage = () => <div>Управление клубами</div>;
-const BookingsPage = () => <div>Управление бронированиями</div>;
-const PaymentsPage = () => <div>Управление платежами</div>;
-const NotificationsPage = () => <div>Управление уведомлениями</div>;
+import OverviewPage from './OverviewPage';
+import UsersPage from './UsersPage';
+import ClubsPage from './ClubsPage';
+import BookingsPage from './BookingsPage';
+import PaymentsPage from './PaymentsPage';
+import RolesPage from './RolesPage';
+import NotificationsPage from './NotificationsPage';
 
 const drawerWidth = 240;
 
@@ -81,6 +81,12 @@ const navigationItems: NavigationItem[] = [
     title: 'Платежи',
     path: '/dashboard/payments',
     icon: <PaymentIcon />,
+    requiredRoles: [UserRoles.SUPER_ADMIN, UserRoles.ADMIN],
+  },
+  {
+    title: 'Роли и права',
+    path: '/dashboard/roles',
+    icon: <SecurityIcon />,
     requiredRoles: [UserRoles.SUPER_ADMIN, UserRoles.ADMIN],
   },
   {
@@ -275,6 +281,7 @@ const DashboardPage: React.FC = () => {
           <Route path="/clubs" element={<ClubsPage />} />
           <Route path="/bookings" element={<BookingsPage />} />
           <Route path="/payments" element={<PaymentsPage />} />
+          <Route path="/roles" element={<RolesPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Routes>
       </Box>
