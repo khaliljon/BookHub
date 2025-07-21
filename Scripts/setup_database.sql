@@ -147,13 +147,13 @@ CREATE TABLE bookings (
     seat_id INTEGER REFERENCES seats(id) ON DELETE CASCADE,
     tariff_id INTEGER REFERENCES tariffs(id),
     date DATE NOT NULL,
-    time_start TIME NOT NULL,
-    time_end TIME NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
     total_price NUMERIC(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'активно',
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT chk_time_range CHECK (time_end > time_start)
+    CONSTRAINT chk_time_range CHECK (end_time > start_time)
 );
 
 -- Платежи
@@ -264,9 +264,9 @@ BEGIN
           AND date = p_date
           AND status = 'активно'
           AND (
-              (p_start >= time_start AND p_start < time_end) OR
-              (p_end > time_start AND p_end <= time_end) OR
-              (p_start <= time_start AND p_end >= time_end)
+              (p_start >= start_time AND p_start < end_time) OR
+              (p_end > start_time AND p_end <= end_time) OR
+              (p_start <= start_time AND p_end >= end_time)
           )
     ) THEN
         RETURN FALSE;
@@ -480,6 +480,102 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ===============================
+-- AI ANALYTICS ENGINE (ВСТРОЕННЫЕ ФУНКЦИИ)
+-- ===============================
+
+-- AI функция сегментации клиентов
+CREATE OR REPLACE FUNCTION ai_customer_segmentation()
+RETURNS TABLE (
+    user_id INTEGER,
+    full_name TEXT,
+    segment TEXT,
+    ai_score NUMERIC(5,2),
+    clv_predicted NUMERIC(10,2),
+    churn_risk NUMERIC(5,2),
+    upsell_score NUMERIC(5,2),
+    total_spent NUMERIC(10,2),
+    visit_frequency NUMERIC(5,2),
+    avg_session_duration NUMERIC(5,2),
+    favorite_game TEXT,
+    recommendations TEXT[]
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH user_stats AS (
+        SELECT 
+            u.id as user_id,
+            u.full_name,
+            COUNT(DISTINCT b.id) as total_bookings,
+            COALESCE(SUM(p.amount), 0) as total_spent,
+            AVG(EXTRACT(EPOCH FROM (b.end_time - b.start_time))/3600.0) as avg_session_hours,
+            COUNT(DISTINCT DATE(b.date)) as unique_visit_days,
+            MAX(b.date) as last_visit,
+            AVG(p.amount) as avg_spending
+        FROM users u
+        LEFT JOIN bookings b ON u.id = b.user_id AND b.status = 'активно'
+        LEFT JOIN payments p ON b.id = p.booking_id AND p.payment_status = 'успешно'
+        WHERE u.is_deleted = false
+        GROUP BY u.id, u.full_name
+    ),
+    ai_scores AS (
+        SELECT 
+            user_id,
+            full_name,
+            total_spent,
+            -- AI Сегментация на основе поведения
+            CASE 
+                WHEN total_spent > 20000 AND avg_session_hours > 3 THEN 'VIP Геймер'
+                WHEN total_bookings > 15 AND unique_visit_days > 10 THEN 'Активный Игрок'
+                WHEN total_bookings BETWEEN 5 AND 15 THEN 'Случайный Посетитель'
+                WHEN CURRENT_DATE - last_visit > 30 OR total_bookings < 3 THEN 'Группа Риска'
+                ELSE 'Новичок'
+            END as segment,
+            -- AI Score (0-100)
+            LEAST(100, GREATEST(0, 
+                (total_spent / 1000.0 * 30) + 
+                (total_bookings * 2) + 
+                (unique_visit_days * 1.5) + 
+                (avg_session_hours * 5) +
+                (CASE WHEN CURRENT_DATE - last_visit <= 7 THEN 20 ELSE 0 END)
+            ))::NUMERIC(5,2) as ai_score,
+            -- CLV Prediction (Customer Lifetime Value)
+            (total_spent * 1.5 + avg_spending * 12)::NUMERIC(10,2) as clv_predicted,
+            -- Churn Risk (0-100)
+            LEAST(100, GREATEST(0,
+                (EXTRACT(DAY FROM CURRENT_DATE - last_visit) * 2) +
+                (CASE WHEN total_bookings < 3 THEN 30 ELSE 0 END) +
+                (CASE WHEN avg_spending < 1000 THEN 20 ELSE 0 END)
+            ))::NUMERIC(5,2) as churn_risk,
+            -- Upsell Score (0-100)
+            LEAST(100, GREATEST(0,
+                (avg_session_hours * 15) +
+                (unique_visit_days * 2) +
+                (CASE WHEN total_spent > 5000 THEN 25 ELSE 0 END) +
+                (CASE WHEN CURRENT_DATE - last_visit <= 3 THEN 20 ELSE 0 END)
+            ))::NUMERIC(5,2) as upsell_score,
+            avg_session_hours,
+            unique_visit_days,
+            total_bookings
+        FROM user_stats
+    )
+    SELECT 
+        a.user_id,
+        a.full_name,
+        a.segment,
+        a.ai_score,
+        a.clv_predicted,
+        a.churn_risk,
+        a.upsell_score,
+        a.total_spent,
+        a.unique_visit_days::NUMERIC(5,2) as visit_frequency,
+        a.avg_session_hours::NUMERIC(5,2) as avg_session_duration,
+        NULL::TEXT as favorite_game,
+        ARRAY['Персональная скидка', 'Турнир', 'VIP предложение']::TEXT[] as recommendations
+    FROM ai_scores a;
+END;
+$$ LANGUAGE plpgsql;
+
 -- =====================================================
 -- 6. REPORTING FUNCTIONS - Функции отчетности
 -- =====================================================
@@ -648,8 +744,8 @@ SELECT
     h.name AS hall_name,
     s.seat_number,
     b.date,
-    b.time_start,
-    b.time_end,
+    b.start_time,
+    b.end_time,
     b.status,
     b.created_at AS booking_created_at
 FROM bookings b
