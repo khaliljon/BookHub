@@ -31,6 +31,10 @@ import {
   Logout as LogoutIcon,
   AccountCircle,
   Security as SecurityIcon,
+  Psychology as PsychologyIcon,
+  AccountBalance as AccountBalanceIcon,
+  PeopleAlt as PeopleAltIcon,
+  Campaign as CampaignIcon,
 } from '@mui/icons-material';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
@@ -42,6 +46,10 @@ import BookingsPage from './BookingsPage';
 import PaymentsPage from './PaymentsPage';
 import RolesPage from './RolesPage';
 import NotificationsPage from './NotificationsPage';
+import AdvancedAnalyticsPage from './AdvancedAnalyticsPage';
+import FinancialAnalyticsPage from './FinancialAnalyticsPage';
+import CustomerIntelligencePage from './CustomerIntelligencePage';
+import MarketingIntelligencePage from './MarketingIntelligencePage';
 
 const drawerWidth = 240;
 
@@ -57,6 +65,30 @@ const navigationItems: NavigationItem[] = [
     title: 'Обзор',
     path: '/dashboard',
     icon: <DashboardIcon />,
+    requiredRoles: [UserRoles.SUPER_ADMIN, UserRoles.ADMIN, UserRoles.MANAGER],
+  },
+  {
+    title: 'AI Аналитика',
+    path: '/dashboard/analytics',
+    icon: <PsychologyIcon />,
+    requiredRoles: [UserRoles.SUPER_ADMIN, UserRoles.ADMIN],
+  },
+  {
+    title: 'Финансы',
+    path: '/dashboard/financial',
+    icon: <AccountBalanceIcon />,
+    requiredRoles: [UserRoles.SUPER_ADMIN, UserRoles.ADMIN],
+  },
+  {
+    title: 'Клиенты ИИ',
+    path: '/dashboard/customers',
+    icon: <PeopleAltIcon />,
+    requiredRoles: [UserRoles.SUPER_ADMIN, UserRoles.ADMIN, UserRoles.MANAGER],
+  },
+  {
+    title: 'Маркетинг ИИ',
+    path: '/dashboard/marketing',
+    icon: <CampaignIcon />,
     requiredRoles: [UserRoles.SUPER_ADMIN, UserRoles.ADMIN, UserRoles.MANAGER],
   },
   {
@@ -277,6 +309,10 @@ const DashboardPage: React.FC = () => {
         <Toolbar />
         <Routes>
           <Route path="/" element={<OverviewPage />} />
+          <Route path="/analytics" element={<AdvancedAnalyticsPage />} />
+          <Route path="/financial" element={<FinancialAnalyticsPage />} />
+          <Route path="/customers" element={<CustomerIntelligencePage />} />
+          <Route path="/marketing" element={<MarketingIntelligencePage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/clubs" element={<ClubsPage />} />
           <Route path="/bookings" element={<BookingsPage />} />
