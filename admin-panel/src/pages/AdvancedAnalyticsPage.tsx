@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -22,6 +22,7 @@ import {
   TextField,
   MenuItem,
   Badge,
+  CircularProgress,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -44,62 +45,78 @@ import {
   Refresh,
   AutoFixHigh,
 } from '@mui/icons-material';
+import { aiAnalyticsService, DashboardSummaryResponse, CustomerSegmentationResponse } from '../services/AiAnalyticsService';
 
 const AdvancedAnalyticsPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState<DashboardSummaryResponse | null>(null);
+  const [customerData, setCustomerData] = useState<CustomerSegmentationResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Моковые данные для ИИ аналитики
-  const aiInsights = [
-    {
-      id: 1,
-      type: 'prediction',
-      severity: 'high',
-      title: 'Прогноз роста выручки',
-      description: 'ИИ предсказывает увеличение выручки на 34% в следующем месяце благодаря новогодним праздникам',
-      confidence: 89,
-      impact: '+₸280,000',
-      action: 'Рекомендуется увеличить маркетинговый бюджет на 25%',
-      icon: <PredictIcon />,
-      color: '#2e7d32',
-    },
-    {
-      id: 2,
-      type: 'warning',
-      severity: 'medium',
-      title: 'Риск оттока клиентов',
-      description: 'Обнаружено 23 клиента с высоким риском ухода (не было активности 14+ дней)',
-      confidence: 76,
-      impact: '-₸45,600',
-      action: 'Запустить персонализированную retention-кампанию',
-      icon: <WarningIcon />,
-      color: '#ed6c02',
-    },
-    {
-      id: 3,
-      type: 'optimization',
-      severity: 'high',
-      title: 'Оптимизация расписания',
-      description: 'ИИ выявил оптимальное время для дисконтных часов: Пн-Ср 14:00-17:00',
-      confidence: 94,
-      impact: '+₸67,200',
-      action: 'Внедрить динамическое ценообразование',
-      icon: <AutoFixHigh />,
-      color: '#1976d2',
-    },
-    {
-      id: 4,
-      type: 'insight',
-      severity: 'low',
-      title: 'Популярные игры',
-      description: 'Valorant показывает рост популярности +45%. Рекомендуется создать турнир',
-      confidence: 82,
-      impact: '+₸89,400',
-      action: 'Организовать Valorant Championship',
-      icon: <InsightIcon />,
-      color: '#9c27b0',
-    },
-  ];
+  // Загрузка реальных AI данных
+  useEffect(() => {
+    loadAiData();
+  }, []);
+
+  const loadAiData = async () => {
+    try {
+      setLoading(true);
+      const [dashboard, customers] = await Promise.all([
+        aiAnalyticsService.getDashboardSummary(),
+        aiAnalyticsService.getCustomerSegmentation()
+      ]);
+      setDashboardData(dashboard);
+      setCustomerData(customers);
+    } catch (error) {
+      console.error('Error loading AI data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateAIInsights = async () => {
+    setAiInsightsLoading(true);
+    try {
+      await aiAnalyticsService.refreshAiData();
+      await loadAiData();
+    } catch (error) {
+      console.error('Error refreshing AI data:', error);
+    } finally {
+      setAiInsightsLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ ml: 2 }}>Загрузка AI аналитики...</Typography>
+      </Box>
+    );
+  }
+
+  // Реальные AI insights на основе данных из API
+  const aiInsights = dashboardData ? dashboardData.data.map((metric, index) => ({
+    id: index + 1,
+    type: metric.alert_level === 'КРИТИЧНО' ? 'warning' : 
+          metric.alert_level === 'ВНИМАНИЕ' ? 'warning' :
+          metric.trend_direction === 'Рост' ? 'prediction' : 'optimization',
+    severity: metric.alert_level === 'КРИТИЧНО' ? 'high' : 
+             metric.alert_level === 'ВНИМАНИЕ' ? 'medium' : 'low',
+    title: `${metric.metric_category}: ${metric.metric_name}`,
+    description: `Текущее значение: ${metric.current_value.toLocaleString()}, Прогноз: ${metric.predicted_value.toLocaleString()}. Тренд: ${metric.trend_direction}`,
+    confidence: Math.round(metric.confidence_level),
+    impact: metric.trend_direction === 'Рост' ? 
+      `+₸${Math.abs(metric.predicted_value - metric.current_value).toLocaleString()}` :
+      `-₸${Math.abs(metric.predicted_value - metric.current_value).toLocaleString()}`,
+    action: metric.recommendations[0] || 'Мониторинг ситуации',
+    icon: metric.alert_level === 'КРИТИЧНО' ? <WarningIcon /> : 
+          metric.trend_direction === 'Рост' ? <PredictIcon /> : <AutoFixHigh />,
+    color: metric.alert_level === 'КРИТИЧНО' ? '#f44336' :
+           metric.alert_level === 'ВНИМАНИЕ' ? '#ff9800' :
+           metric.trend_direction === 'Рост' ? '#4caf50' : '#2196f3',
+  })) : [];
 
   // Метрики производительности
   const performanceMetrics = [
@@ -217,7 +234,7 @@ const AdvancedAnalyticsPage: React.FC = () => {
     }
   };
 
-  const generateAIInsights = () => {
+  const generateAIInsightsOld = () => {
     setAiInsightsLoading(true);
     setTimeout(() => {
       setAiInsightsLoading(false);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -28,6 +28,8 @@ import {
   IconButton,
   Accordion,
   AccordionSummary,
+  CircularProgress,
+  Skeleton,
   AccordionDetails,
   Stepper,
   Step,
@@ -68,15 +70,56 @@ import {
   EmojiEvents,
   TrendingFlat,
   MonetizationOn,
+  Refresh,
 } from '@mui/icons-material';
+import { aiAnalyticsService } from '../services/AiAnalyticsService';
 
 const CustomerIntelligencePage: React.FC = () => {
   const [selectedSegment, setSelectedSegment] = useState('all');
   const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Real AI data states
+  const [customerSegmentation, setCustomerSegmentation] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+
+  // Load AI data
+  useEffect(() => {
+    loadAiData();
+  }, [selectedSegment, selectedPeriod]);
+
+  const loadAiData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [segmentation, dashboard] = await Promise.all([
+        aiAnalyticsService.getCustomerSegmentation(),
+        aiAnalyticsService.getDashboardSummary()
+      ]);
+      
+      setCustomerSegmentation(segmentation);
+      setDashboardData(dashboard);
+    } catch (err) {
+      setError('Ошибка загрузки AI данных');
+      console.error('AI data loading error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshData = async () => {
+    setRefreshing(true);
+    await loadAiData();
+    setRefreshing(false);
+  };
 
   // Сегменты клиентов
-  const customerSegments = [
-    {
+  const getCustomerSegmentsFromAI = () => {
+    if (!customerSegmentation?.data) {
+      return [
+        {
       name: 'VIP Геймеры',
       count: 89,
       percentage: 7.2,
@@ -137,6 +180,38 @@ const CustomerIntelligencePage: React.FC = () => {
       value: 'newbie',
     },
   ];
+  }
+
+  // Transform AI segmentation data
+  return customerSegmentation.data.map((segment: any) => ({
+    name: segment.segment || 'Неизвестный сегмент',
+    count: segment.customer_count || 0,
+    percentage: ((segment.customer_count || 0) / (customerSegmentation.total_customers || 1) * 100),
+    avgSpend: `₸${segment.avg_spent?.toLocaleString() || '0'}`,
+    retention: Math.min(100, segment.retention_rate || 75),
+    satisfaction: Math.min(10, segment.satisfaction_score || 7.5),
+    color: getSegmentColor(segment.segment),
+    growth: `+${segment.growth_rate?.toFixed(1) || '0'}%`,
+    characteristics: segment.characteristics || ['AI анализ', 'Персонализация'],
+    value: segment.segment?.toLowerCase().replace(/\s+/g, '_') || 'unknown',
+    aiScore: segment.ai_score || 70,
+    clvPredicted: segment.clv_predicted || 0,
+    churnRisk: segment.churn_risk || 25
+  }));
+};
+
+const getSegmentColor = (segment: string) => {
+  switch (segment?.toLowerCase()) {
+    case 'vip': return '#ffd700';
+    case 'high-value': return '#4caf50';
+    case 'regular': return '#2196f3';
+    case 'at-risk': return '#ff9800';
+    case 'new': return '#9c27b0';
+    default: return '#757575';
+  }
+};
+
+const customerSegments = getCustomerSegmentsFromAI();
 
   // AI предсказания поведения клиентов
   const behaviorPredictions = [
@@ -258,11 +333,6 @@ const CustomerIntelligencePage: React.FC = () => {
     },
   ];
 
-  const getSegmentColor = (segment: string) => {
-    const segmentData = customerSegments.find(s => s.name === segment);
-    return segmentData?.color || '#666';
-  };
-
   const getRiskColor = (risk: number) => {
     if (risk < 20) return '#4caf50';
     if (risk < 50) return '#ff9800';
@@ -331,7 +401,7 @@ const CustomerIntelligencePage: React.FC = () => {
               sx={{ minWidth: 150, mr: 2 }}
             >
               <MenuItem value="all">Все сегменты</MenuItem>
-              {customerSegments.map((segment) => (
+              {customerSegments.map((segment: any) => (
                 <MenuItem key={segment.value} value={segment.value}>
                   {segment.name}
                 </MenuItem>
@@ -349,6 +419,16 @@ const CustomerIntelligencePage: React.FC = () => {
               <MenuItem value="month">Месяц</MenuItem>
               <MenuItem value="quarter">Квартал</MenuItem>
             </TextField>
+            <Button
+              variant="outlined"
+              startIcon={refreshing ? <CircularProgress size={16} /> : <Refresh />}
+              onClick={refreshData}
+              disabled={refreshing}
+              size="small"
+              sx={{ mr: 2 }}
+            >
+              {refreshing ? 'Обновление...' : 'Обновить'}
+            </Button>
             <Button variant="contained" startIcon={<AutoFixHigh />}>
               Создать кампанию
             </Button>
@@ -356,16 +436,39 @@ const CustomerIntelligencePage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Сегменты клиентов */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {customerSegments.map((segment) => (
-          <Grid item xs={12} sm={6} md={4} lg={2.4} key={segment.value}>
-            <Card sx={{ 
-              borderRadius: 3,
-              background: `linear-gradient(135deg, ${segment.color}15 0%, ${segment.color}25 100%)`,
-              border: `2px solid ${segment.color}40`,
-              height: '100%',
-            }}>
+      {/* Error state */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Loading state */}
+      {loading ? (
+        <Grid container spacing={3}>
+          {[1, 2, 3, 4, 5].map((item) => (
+            <Grid item xs={12} sm={6} md={4} lg={2.4} key={item}>
+              <Card sx={{ p: 2 }}>
+                <Skeleton variant="circular" width={40} height={40} />
+                <Skeleton variant="text" height={30} />
+                <Skeleton variant="text" height={20} />
+                <Skeleton variant="rectangular" height={80} />
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <>
+          {/* Сегменты клиентов */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {customerSegments.map((segment: any) => (
+              <Grid item xs={12} sm={6} md={4} lg={2.4} key={segment.value}>
+                <Card sx={{ 
+                  borderRadius: 3,
+                  background: `linear-gradient(135deg, ${segment.color}15 0%, ${segment.color}25 100%)`,
+                  border: `2px solid ${segment.color}40`,
+                  height: '100%',
+                }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
@@ -718,6 +821,8 @@ const CustomerIntelligencePage: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
+      </>
+      )}
     </Box>
   );
 };
