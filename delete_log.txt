@@ -1,0 +1,8 @@
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\5fb02b18-1738-4c4c-9265-a359ac8f4649.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\5fb02b18-1738-4c4c-9265-a359ac8f4649.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\e462b864-faf9-47ec-955c-d691ca77fac4.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\e462b864-faf9-47ec-955c-d691ca77fac4.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\ed52e8a2-6e8e-4821-a02d-440d33f187f7.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\ed52e8a2-6e8e-4821-a02d-440d33f187f7.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\3c815802-9360-4af4-977c-1b98fcd9248e.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\3c815802-9360-4af4-977c-1b98fcd9248e.jpg

@@ -21,7 +21,7 @@ namespace OynaApi.Models
         [Column("description")]
         public string Description { get; set; }
 
-        [Column("phone")]
+        [Column("phone_number")]
         public string Phone { get; set; }
 
         [Column("email")]

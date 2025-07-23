@@ -15,7 +15,8 @@ import {
   CreateUserRequest,
   UpdateUserRequest,
   ApiResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  ClubPhoto
 } from '../types';
 
 // MEGA FORCE RELOAD: 2025-07-20-19:15:00
@@ -163,8 +164,8 @@ class ApiService {
   }
 
   // Клубы
-  async getClubs(page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Club>> {
-    const response: AxiosResponse<PaginatedResponse<Club>> = await this.api.get(`/clubs?page=${page}&pageSize=${pageSize}`);
+  async getClubs(): Promise<Club[]> {
+    const response: AxiosResponse<Club[]> = await this.api.get('/clubs');
     return response.data;
   }
 
@@ -211,6 +212,12 @@ class ApiService {
 
   async deleteHall(id: number): Promise<void> {
     await this.api.delete(`/halls/${id}`);
+  }
+
+  // Получить залы конкретного клуба
+  async getClubHalls(clubId: number): Promise<Hall[]> {
+    const response: AxiosResponse<Hall[]> = await this.api.get(`/clubs/${clubId}/halls`);
+    return response.data;
   }
 
   // Места
@@ -313,6 +320,31 @@ class ApiService {
 
   async deleteNotification(id: number): Promise<void> {
     await this.api.delete(`/notifications/${id}`);
+  }
+
+  // Получить фото клуба
+  async getClubPhotos(clubId: number): Promise<ClubPhoto[]> {
+    const response: AxiosResponse<ClubPhoto[]> = await this.api.get(`/ClubPhotos?club_id=${clubId}`);
+    return response.data;
+  }
+
+  // Добавить фото клуба
+  async addClubPhoto(photo: Partial<ClubPhoto>): Promise<ClubPhoto> {
+    const response: AxiosResponse<ClubPhoto> = await this.api.post('/ClubPhotos', photo);
+    return response.data;
+  }
+
+  // Удалить фото клуба
+  async deleteClubPhoto(photoId: number): Promise<void> {
+    await this.api.delete(`/ClubPhotos/${photoId}`);
+  }
+
+  // Загрузить фото клуба (upload)
+  async uploadClubPhoto(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await this.api.post('/ClubPhotos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return response.data.url;
   }
 }
 

@@ -27,7 +27,6 @@ namespace OynaApi.Controllers
         public async Task<ActionResult<IEnumerable<ClubDto>>> GetClubs()
         {
             var clubs = await _context.Clubs.ToListAsync();
-
             var dtos = clubs.Select(club => new ClubDto
             {
                 Id = club.Id,
@@ -40,7 +39,6 @@ namespace OynaApi.Controllers
                 OpeningHours = club.OpeningHours,
                 IsDeleted = club.IsDeleted
             }).ToList();
-
             return dtos;
         }
 
@@ -48,7 +46,7 @@ namespace OynaApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ClubDto>> GetClub(int id)
         {
-            var club = await _context.Clubs.FindAsync(id);
+            var club = await _context.Clubs.FirstOrDefaultAsync(c => c.Id == id);
 
             if (club == null)
                 return NotFound();
@@ -65,8 +63,23 @@ namespace OynaApi.Controllers
                 OpeningHours = club.OpeningHours,
                 IsDeleted = club.IsDeleted
             };
-
             return dto;
+        }
+
+        // GET: api/Clubs/{id}/Halls
+        [HttpGet("{id}/Halls")]
+        public async Task<ActionResult<IEnumerable<HallDto>>> GetClubHalls(int id)
+        {
+            var halls = await _context.Halls.Where(h => h.ClubId == id).ToListAsync();
+            var dtos = halls.Select(h => new HallDto
+            {
+                Id = h.Id,
+                ClubId = h.ClubId,
+                Name = h.Name,
+                Description = h.Description,
+                IsDeleted = h.IsDeleted
+            }).ToList();
+            return dtos;
         }
 
         // PUT: api/Clubs/5

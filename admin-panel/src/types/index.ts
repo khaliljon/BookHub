@@ -51,6 +51,7 @@ export interface Hall {
   isActive: boolean;
   club: Club;
   seats: Seat[];
+  isDeleted: boolean;
 }
 
 export interface Seat {
@@ -119,6 +120,7 @@ export interface ClubPhoto {
   clubId: number;
   photoUrl: string;
   description: string;
+  uploadedAt: string;
   isMain: boolean;
   club: Club;
 }

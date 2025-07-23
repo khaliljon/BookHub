@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 using OynaApi.Data;
 using OynaApi.Models;
 using OynaApi.Models.Dtos;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using System;
 
 namespace OynaApi.Controllers
 {
@@ -24,10 +27,12 @@ namespace OynaApi.Controllers
 
         // GET: api/ClubPhotos
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ClubPhotoDto>>> GetClubPhotos()
+        public async Task<ActionResult<IEnumerable<ClubPhotoDto>>> GetClubPhotos([FromQuery(Name = "club_id")] int? club_id)
         {
-            var photos = await _context.ClubPhotos.ToListAsync();
-
+            var query = _context.ClubPhotos.AsQueryable();
+            if (club_id.HasValue)
+                query = query.Where(p => p.ClubId == club_id.Value);
+            var photos = await query.ToListAsync();
             var dtos = photos.Select(photo => new ClubPhotoDto
             {
                 Id = photo.Id,
@@ -36,7 +41,6 @@ namespace OynaApi.Controllers
                 Description = photo.Description,
                 UploadedAt = photo.UploadedAt
             }).ToList();
-
             return dtos;
         }
 
@@ -112,6 +116,34 @@ namespace OynaApi.Controllers
             return CreatedAtAction(nameof(GetClubPhoto), new { id = photo.Id }, dto);
         }
 
+        public class ClubPhotoUploadDto
+        {
+            public IFormFile File { get; set; }
+        }
+
+        // POST: api/ClubPhotos/upload
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadClubPhoto([FromForm] ClubPhotoUploadDto dto)
+        {
+            var file = dto.File;
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "clubs");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var url = $"/uploads/clubs/{fileName}";
+            return Ok(new { url });
+        }
+
         // DELETE: api/ClubPhotos/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteClubPhoto(int id)
@@ -122,6 +154,29 @@ namespace OynaApi.Controllers
 
             _context.ClubPhotos.Remove(photo);
             await _context.SaveChangesAsync();
+
+            // Удалить файл с диска, если он находится в /uploads/clubs/
+            if (!string.IsNullOrEmpty(photo.PhotoUrl) && photo.PhotoUrl.StartsWith("/uploads/clubs/"))
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", photo.PhotoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                try
+                {
+                    System.IO.File.AppendAllText("delete_log.txt", $"Пытаюсь удалить файл: {filePath}\n");
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                        System.IO.File.AppendAllText("delete_log.txt", $"Файл удалён: {filePath}\n");
+                    }
+                    else
+                    {
+                        System.IO.File.AppendAllText("delete_log.txt", $"Файл не найден: {filePath}\n");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText("delete_log.txt", $"Ошибка при удалении файла: {ex.Message}\n");
+                }
+            }
 
             return NoContent();
         }

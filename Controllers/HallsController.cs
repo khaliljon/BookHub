@@ -24,9 +24,12 @@ namespace OynaApi.Controllers
 
         // GET: api/Halls
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<HallDto>>> GetHalls()
+        public async Task<ActionResult<IEnumerable<HallDto>>> GetHalls([FromQuery(Name = "club_id")] int? club_id)
         {
-            var halls = await _context.Halls.ToListAsync();
+            var query = _context.Halls.AsQueryable();
+            if (club_id.HasValue)
+                query = query.Where(h => h.ClubId == club_id.Value);
+            var halls = await query.ToListAsync();
             var dtos = halls.Select(h => new HallDto
             {
                 Id = h.Id,
@@ -35,7 +38,6 @@ namespace OynaApi.Controllers
                 Description = h.Description,
                 IsDeleted = h.IsDeleted
             }).ToList();
-
             return dtos;
         }
 
