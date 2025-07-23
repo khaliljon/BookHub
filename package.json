@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "swiper": "^11.2.10",
+    "yet-another-react-lightbox": "^3.25.0"
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent, MouseEvent } from 'react';
 import apiService from '../services/api';
 import { Club, Hall, ClubPhoto } from '../types';
 import {
@@ -27,6 +27,9 @@ import {
   DialogActions,
   Snackbar,
   Alert,
+  Tabs,
+  Tab,
+  GlobalStyles,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -40,7 +43,15 @@ import {
   Delete as DeleteIcon,
   Visibility as ViewIcon,
   TrendingUp,
+  Email as EmailIcon,
+  AddAPhoto as AddAPhotoIcon,
 } from '@mui/icons-material';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'yet-another-react-lightbox/styles.css';
+import Lightbox from 'yet-another-react-lightbox';
 
 const ClubsPage: React.FC = () => {
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -58,6 +69,8 @@ const ClubsPage: React.FC = () => {
   const [addHallOpen, setAddHallOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [editHall, setEditHall] = useState<Hall | null>(null);
+  const [tab, setTab] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -82,10 +95,10 @@ const ClubsPage: React.FC = () => {
     fetchClubs();
   }, []);
 
-  const filteredClubs = clubs.filter((club: any) =>
+  const filteredClubs = clubs.filter((club: Club) =>
     filterCity === 'all' || club.city === filterCity
   );
-  const cities = ['all', ...Array.from(new Set(clubs.map((club: any) => club.city)))];
+  const cities = ['all', ...Array.from(new Set(clubs.map((club: Club) => club.city)))];
 
   // Пример статистики: количество клубов и залов
   const totalClubs = clubs.length;
@@ -97,7 +110,8 @@ const ClubsPage: React.FC = () => {
 
   const handleView = async (club: Club) => {
     const halls = await apiService.getClubHalls(club.id);
-    setViewClub({ ...club, halls });
+    const clubPhotos = await apiService.getClubPhotos(club.id);
+    setViewClub({ ...club, halls, clubPhotos });
   };
   const handleEdit = async (club: Club) => {
     setEditClub(club);
@@ -129,7 +143,7 @@ const ClubsPage: React.FC = () => {
       setSnackbar({ open: true, message: 'Фото удалено', severity: 'success' });
     }
   };
-  const handlePhotoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
@@ -175,6 +189,13 @@ const ClubsPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
+      <GlobalStyles styles={{
+        '.swiper-slide:focus, .swiper-slide:focus-visible': {
+          outline: 'none !important',
+          background: 'transparent !important',
+          boxShadow: 'none !important',
+        },
+      }} />
       {/* Заголовок */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', mb: 1 }}>
@@ -283,7 +304,7 @@ const ClubsPage: React.FC = () => {
           size="small"
           label="Фильтр по городу"
           value={filterCity}
-          onChange={(e) => setFilterCity(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setFilterCity(e.target.value)}
           sx={{ minWidth: 200 }}
         >
           <MenuItem value="all">Все города</MenuItem>
@@ -427,53 +448,133 @@ const ClubsPage: React.FC = () => {
       </Card>
 
       {/* Модалка просмотра клуба */}
-      <Dialog open={!!viewClub} onClose={() => setViewClub(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Информация о клубе</DialogTitle>
-        <DialogContent>
-          {viewClub && (
-            <Box>
-              <Typography variant="h6">{viewClub.name}</Typography>
-              <Typography>Город: {viewClub.city}</Typography>
-              <Typography>Адрес: {viewClub.address}</Typography>
-              <Typography>Описание: {viewClub.description}</Typography>
-              <Typography>Телефон: {viewClub.phone}</Typography>
-              <Typography>Email: {viewClub.email}</Typography>
-              <Typography>Время работы: {viewClub.openingHours}</Typography>
-              <Typography sx={{ mt: 2, fontWeight: 'bold' }}>Фото клуба:</Typography>
-              <Box sx={{ mb: 1, display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
-                {viewClub.clubPhotos?.length ? (
-                  viewClub.clubPhotos.length === 1 ? (
-                    <div>
-                      <img src={`http://localhost:3001${viewClub.clubPhotos[0].photoUrl}`} alt={viewClub.clubPhotos[0].description} style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 4 }} />
-                      <Typography variant="caption" color="text.secondary">{viewClub.clubPhotos[0].photoUrl}</Typography>
-                    </div>
-                  ) : (
-                    <ClubPhotoSlider photos={viewClub.clubPhotos} />
-                  )
-                ) : <Typography color="text.secondary">Нет фото</Typography>}
-              </Box>
-              <Typography sx={{ mt: 2, fontWeight: 'bold' }}>Залы:</Typography>
-              <Box sx={{ mb: 1 }}>
-                {viewClub.halls?.length ? (
-                  <>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                      {viewClub.halls.length} {viewClub.halls.length === 1 ? 'зал' : (viewClub.halls.length >= 2 && viewClub.halls.length <= 4 ? 'зала' : 'залов')}
-                    </Typography>
-                    {viewClub.halls.map(hall => (
-                      <Box key={hall.id} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                        <Typography sx={{ flex: 1 }}>{hall.name} — {hall.description}</Typography>
-                      </Box>
-                    ))}
-                  </>
-                ) : <Typography color="text.secondary">Нет залов</Typography>}
+      {viewClub && (
+        <Dialog open={true} onClose={() => setViewClub(null)} maxWidth="md" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: 4, minWidth: 520, maxWidth: 700, p: 3 } }}>
+          <DialogTitle>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Avatar
+                src={viewClub.clubPhotos?.[0]?.photoUrl ? `http://localhost:3001${viewClub.clubPhotos[0].photoUrl}` : undefined}
+                sx={{ width: 64, height: 64, boxShadow: 2 }}
+                variant="rounded"
+              />
+              <Box>
+                <Typography variant="h5">{viewClub.name}</Typography>
+                <Typography variant="subtitle2" color="text.secondary">
+                  {viewClub.city}
+                </Typography>
               </Box>
             </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setViewClub(null)}>Закрыть</Button>
-        </DialogActions>
-      </Dialog>
+          </DialogTitle>
+          <DialogContent sx={{ overflowX: 'hidden', pt: 2, pb: 1, px: 3 }}>
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+              <Tab label="Общее" />
+              <Tab label="Залы" />
+              <Tab label="Фото" />
+              <Tab label="Контакты" />
+            </Tabs>
+            {tab === 0 && (
+              <Box>
+                <Typography gutterBottom>
+                  <LocationIcon fontSize="small" /> {viewClub.address}
+                </Typography>
+                <Typography gutterBottom>
+                  <ScheduleIcon fontSize="small" /> {viewClub.openingHours}
+                </Typography>
+                <Typography gutterBottom>
+                  {viewClub.description}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Статус: {viewClub.isActive ? 'Активен' : 'Неактивен'}
+                </Typography>
+              </Box>
+            )}
+            {tab === 1 && (
+              <Box>
+                {viewClub.halls?.length ? (
+                  <Grid container spacing={2}>
+                    {viewClub.halls.map((room, idx) => (
+                      <Grid item xs={12} md={6} key={idx}>
+                        <Box p={2} boxShadow={1} borderRadius={2}>
+                          <Typography variant="subtitle1">{room.name}</Typography>
+                          <Typography variant="body2">{room.description}</Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : (
+                  <Typography color="text.secondary">Нет информации о залах</Typography>
+                )}
+              </Box>
+            )}
+            {tab === 2 && (
+              <Box sx={{ minHeight: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <Swiper
+                  slidesPerView={1}
+                  navigation
+                  loop
+                  modules={[Navigation]}
+                  style={{ width: '100%', maxWidth: 500, margin: '0 auto' }}
+                >
+                  {viewClub.clubPhotos?.length ? viewClub.clubPhotos.map((photo, idx) => (
+                    <SwiperSlide key={photo.id}>
+                      <Box
+                        component="img"
+                        src={`http://localhost:3001${photo.photoUrl}`}
+                        alt={photo.description}
+                        tabIndex={-1}
+                        sx={{
+                          width: '100%',
+                          maxWidth: 480,
+                          height: 'auto',
+                          maxHeight: 350,
+                          objectFit: 'contain',
+                          borderRadius: 2,
+                          boxShadow: 1,
+                          margin: '0 auto',
+                          background: '#f7f7f7',
+                          border: '1px solid #eee',
+                          display: 'block',
+                          '&:focus': {
+                            outline: 'none',
+                            background: '#f7f7f7',
+                          },
+                        }}
+                        onClick={() => setLightboxIndex(idx)}
+                      />
+                    </SwiperSlide>
+                  )) : (
+                    <Box textAlign="center" sx={{ width: '100%' }}>
+                      <AddAPhotoIcon fontSize="large" sx={{ color: '#ccc', mb: 1 }} />
+                      <Typography>Нет фото</Typography>
+                    </Box>
+                  )}
+                </Swiper>
+                {lightboxIndex !== null && viewClub.clubPhotos?.length > 0 && (
+                  <Lightbox
+                    open={lightboxIndex !== null}
+                    close={() => setLightboxIndex(null)}
+                    index={lightboxIndex}
+                    slides={viewClub.clubPhotos.map((photo, i) => ({ src: `http://localhost:3001${photo.photoUrl}`, description: photo.description }))}
+                  />
+                )}
+              </Box>
+            )}
+            {tab === 3 && (
+              <Box>
+                <Typography gutterBottom>
+                  <PhoneIcon fontSize="small" /> {viewClub.phone}
+                </Typography>
+                <Typography gutterBottom>
+                  <EmailIcon fontSize="small" /> {viewClub.email}
+                </Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setViewClub(null)}>Закрыть</Button>
+          </DialogActions>
+        </Dialog>
+      )}
       {/* Модалка редактирования клуба */}
       <Dialog open={!!editClub} onClose={() => setEditClub(null)} maxWidth="sm" fullWidth>
         <DialogTitle>Редактировать клуб</DialogTitle>
@@ -602,5 +703,135 @@ const ClubPhotoSlider: React.FC<ClubPhotoSliderProps> = ({ photos }) => {
       <img src={`http://localhost:3001${photos[index].photoUrl}`} alt={photos[index].description} style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 4 }} />
       <Button size="small" onClick={next} disabled={photos.length <= 1}>{'>'}</Button>
     </Box>
+  );
+};
+
+// Новый компонент модального окна для просмотра клуба
+interface ClubInfoModalProps {
+  open: boolean;
+  onClose: () => void;
+  club: Club;
+}
+const ClubInfoModal: React.FC<ClubInfoModalProps> = ({ open, onClose, club }) => {
+  const [tab, setTab] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const photos = club.clubPhotos?.length ? club.clubPhotos.map(p => `http://localhost:3001${p.photoUrl}`) : [];
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Avatar
+            src={photos[0] || undefined}
+            sx={{ width: 64, height: 64, boxShadow: 2 }}
+            variant="rounded"
+          />
+          <Box>
+            <Typography variant="h5">{club.name}</Typography>
+            <Typography variant="subtitle2" color="text.secondary">
+              {club.city}
+            </Typography>
+          </Box>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+          <Tab label="Общее" />
+          <Tab label="Залы" />
+          <Tab label="Фото" />
+          <Tab label="Контакты" />
+        </Tabs>
+        {tab === 0 && (
+          <Box>
+            <Typography gutterBottom>
+              <LocationIcon fontSize="small" /> {club.address}
+            </Typography>
+            <Typography gutterBottom>
+              <ScheduleIcon fontSize="small" /> {club.openingHours}
+            </Typography>
+            <Typography gutterBottom>
+              {club.description}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Статус: {club.isActive ? 'Активен' : 'Неактивен'}
+            </Typography>
+          </Box>
+        )}
+        {tab === 1 && (
+          <Box>
+            {club.halls?.length ? (
+              <Grid container spacing={2}>
+                {club.halls.map((room, idx) => (
+                  <Grid item xs={12} md={6} key={idx}>
+                    <Box p={2} boxShadow={1} borderRadius={2}>
+                      <Typography variant="subtitle1">{room.name}</Typography>
+                      <Typography variant="body2">{room.description}</Typography>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Typography color="text.secondary">Нет информации о залах</Typography>
+            )}
+          </Box>
+        )}
+        {tab === 2 && (
+          <Box sx={{ minHeight: 240, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Swiper slidesPerView={1} spaceBetween={16} style={{ marginBottom: 16 }}>
+              {club.clubPhotos?.length ? club.clubPhotos.map((photo, idx) => (
+                <SwiperSlide key={photo.id}>
+                  <Box
+                    component="img"
+                    src={`http://localhost:3001${photo.photoUrl}`}
+                    alt={photo.description}
+                    sx={{
+                      width: 'auto',
+                      maxWidth: 360,
+                      height: 220,
+                      maxHeight: 220,
+                      objectFit: 'contain',
+                      borderRadius: 2,
+                      boxShadow: 1,
+                      cursor: 'pointer',
+                      mb: 1,
+                      background: '#f7f7f7',
+                      display: 'block',
+                      margin: '0 auto',
+                      border: '1px solid #eee',
+                    }}
+                    onClick={() => setLightboxIndex(idx)}
+                  />
+                </SwiperSlide>
+              )) : (
+                <Box textAlign="center" sx={{ width: '100%' }}>
+                  <AddAPhotoIcon fontSize="large" sx={{ color: '#ccc', mb: 1 }} />
+                  <Typography>Нет фото</Typography>
+                </Box>
+              )}
+            </Swiper>
+            {lightboxIndex !== null && photos.length > 0 && (
+              <Lightbox
+                open={lightboxIndex !== null}
+                close={() => setLightboxIndex(null)}
+                index={lightboxIndex}
+                slides={photos.map((src, i) => ({ src, description: club.clubPhotos[i].description } ))}
+              />
+            )}
+          </Box>
+        )}
+        {tab === 3 && (
+          <Box>
+            <Typography gutterBottom>
+              <PhoneIcon fontSize="small" /> {club.phone}
+            </Typography>
+            <Typography gutterBottom>
+              <EmailIcon fontSize="small" /> {club.email}
+            </Typography>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Закрыть</Button>
+      </DialogActions>
+    </Dialog>
   );
 };

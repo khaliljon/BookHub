@@ -15,6 +15,7 @@ const aiApi = axios.create({
 aiApi.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
+    if (!config.headers) config.headers = {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -343,7 +344,9 @@ class AiAnalyticsService {
 
   // 🔄 Data Management
   async refreshAiData(): Promise<{ success: boolean; message: string; timestamp: string }> {
-    const response = await aiApi.post('/refresh-ai-data');
+    const response = await aiApi.post<{ success: boolean; message: string; timestamp: string }>(
+      '/refresh-ai-data'
+    );
     return response.data;
   }
 

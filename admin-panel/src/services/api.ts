@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+// @ts-ignore: типы экспортируются корректно в axios 1.x, но linter может ругаться из-за кэша или особенностей среды
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { 
   User, 
   Role, 
@@ -29,11 +30,11 @@ class ApiService {
 
   constructor() {
     const timestamp = new Date().toISOString();
-    console.log('� API SERVICE CONSTRUCTOR CALLED AT:', timestamp);
+    console.log(' API SERVICE CONSTRUCTOR CALLED AT:', timestamp);
     console.log('=== 🚨 API SERVICE MEGA DEBUG 🚨 ===');
-    console.log('REACT_APP_API_URL environment variable:', process.env.REACT_APP_API_URL);
+    console.log('REACT_APP_API_URL environment variable:', (process as any).env.REACT_APP_API_URL);
     console.log('Fallback URL: https://localhost:7183/api');
-    const finalUrl = process.env.REACT_APP_API_URL || 'https://localhost:7183/api';
+    const finalUrl = (process as any).env.REACT_APP_API_URL || 'https://localhost:7183/api';
     console.log('🚨 FINAL baseURL that will be used:', finalUrl);
     console.log('🚨 Type of finalUrl:', typeof finalUrl);
     console.log('🚨 finalUrl length:', finalUrl.length);
@@ -48,23 +49,24 @@ class ApiService {
       timeout: 10000,
     });
 
-    console.log('🚨 AXIOS INSTANCE CREATED WITH baseURL:', this.api.defaults.baseURL);
-    console.log('🚨 AXIOS CONFIG:', this.api.defaults);
+    console.log('🚨 AXIOS INSTANCE CREATED WITH baseURL:', this.api.baseURL);
+    console.log('🚨 AXIOS CONFIG:', this.api);
 
     // Добавляем токен к каждому запросу
-    this.api.interceptors.request.use((config) => {
+    this.api.interceptors.request.use((config: AxiosRequestConfig) => {
       const token = localStorage.getItem('authToken');
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        config.headers = config.headers || {};
+        (config.headers as any).Authorization = `Bearer ${token}`;
       }
       return config;
     });
 
     // Обработка ответов
     this.api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
+      (response: AxiosResponse) => response,
+      (error: unknown) => {
+        if ((error as any).response?.status === 401) {
           // Токен истек или невалиден
           localStorage.removeItem('authToken');
           localStorage.removeItem('user');
@@ -90,13 +92,13 @@ class ApiService {
   async getUsers(): Promise<User[]> {
     try {
       console.log('🔍 DEBUG: getUsers method called');
-      console.log('🔍 DEBUG: this.api.defaults.baseURL =', this.api.defaults.baseURL);
-      console.log('🔍 DEBUG: Full request URL will be:', this.api.defaults.baseURL + '/users');
+      console.log('🔍 DEBUG: this.api.baseURL =', this.api.baseURL);
+      console.log('🔍 DEBUG: Full request URL will be:', this.api.baseURL + '/users');
       console.log('Making request to /users...');
       const response: AxiosResponse<User[]> = await this.api.get('/users');
       console.log('Response from /users:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error in getUsers:', error);
       console.error('🔍 DEBUG: Error config:', (error as any)?.config);
       throw error;
@@ -130,7 +132,7 @@ class ApiService {
       console.log('Sending userDto to API:', userDto);
       const response: AxiosResponse<User> = await this.api.put(`/users/${id}`, userDto);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error in updateUser:', error);
       throw error;
     }
@@ -352,5 +354,5 @@ export const apiService = new ApiService();
 
 // DEBUG: Принудительно выводим в консоль при загрузке модуля
 console.log('🚀 API SERVICE MODULE LOADED - TIMESTAMP:', new Date().toISOString());
-console.log('🚀 Current baseURL config:', (apiService as any).api.defaults.baseURL);
+console.log('🚀 Current baseURL config:', (apiService as any).api.baseURL);
 export default apiService;

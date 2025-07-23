@@ -6,3 +6,13 @@
 Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\ed52e8a2-6e8e-4821-a02d-440d33f187f7.jpg
 Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\3c815802-9360-4af4-977c-1b98fcd9248e.jpg
 Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\3c815802-9360-4af4-977c-1b98fcd9248e.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\3385a6ad-cd6d-49b9-a023-9d87189b5f65.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\3385a6ad-cd6d-49b9-a023-9d87189b5f65.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\5e8b3381-388c-41d6-ac03-8078e55916d0.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\5e8b3381-388c-41d6-ac03-8078e55916d0.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\ac66956e-f41e-488c-9017-acfa9f0642b1.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\ac66956e-f41e-488c-9017-acfa9f0642b1.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\92dbe9e8-d7be-4b8b-a22c-e810e8256be0.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\92dbe9e8-d7be-4b8b-a22c-e810e8256be0.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\dc7d0b98-cb63-471e-9de3-27d8472ad1d1.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\dc7d0b98-cb63-471e-9de3-27d8472ad1d1.jpg
