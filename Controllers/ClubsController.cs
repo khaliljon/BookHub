@@ -38,7 +38,8 @@ namespace BookHub.Controllers
                 Email = club.Email,
                 OpeningHours = club.OpeningHours,
                 IsDeleted = club.IsDeleted,
-                IsActive = club.IsActive
+                IsActive = club.IsActive,
+                LogoUrl = club.LogoUrl
             }).ToList();
             return dtos;
         }
@@ -63,7 +64,8 @@ namespace BookHub.Controllers
                 Email = club.Email,
                 OpeningHours = club.OpeningHours,
                 IsDeleted = club.IsDeleted,
-                IsActive = club.IsActive
+                IsActive = club.IsActive,
+                LogoUrl = club.LogoUrl
             };
             return dto;
         }
@@ -79,7 +81,8 @@ namespace BookHub.Controllers
                 ClubId = h.ClubId,
                 Name = h.Name,
                 Description = h.Description,
-                IsDeleted = h.IsDeleted
+                IsDeleted = h.IsDeleted,
+                PhotoUrls = h.PhotoUrls ?? new List<string>()
             }).ToList();
             return dtos;
         }
@@ -103,6 +106,7 @@ namespace BookHub.Controllers
             club.Email = dto.Email;
             club.OpeningHours = dto.OpeningHours;
             club.IsActive = dto.IsActive;
+            club.LogoUrl = dto.LogoUrl;
 
             try
             {
@@ -133,7 +137,8 @@ namespace BookHub.Controllers
                 Email = dto.Email,
                 OpeningHours = dto.OpeningHours,
                 IsDeleted = dto.IsDeleted,
-                IsActive = dto.IsActive
+                IsActive = dto.IsActive,
+                LogoUrl = dto.LogoUrl
             };
 
             _context.Clubs.Add(club);

@@ -37,6 +37,8 @@ export interface Club {
   email: string;
   openingHours: string;
   isActive: boolean;
+  isDeleted: boolean; // добавлено
+  logoUrl?: string;   // добавлено
   halls: Hall[];
   tariffs: Tariff[];
   clubPhotos: ClubPhoto[];
@@ -52,6 +54,7 @@ export interface Hall {
   club: Club;
   seats: Seat[];
   isDeleted: boolean;
+  photoUrls?: string[]; // добавлено
 }
 
 export interface Seat {

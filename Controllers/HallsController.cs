@@ -36,7 +36,8 @@ namespace BookHub.Controllers
                 ClubId = h.ClubId,
                 Name = h.Name,
                 Description = h.Description,
-                IsDeleted = h.IsDeleted
+                IsDeleted = h.IsDeleted,
+                PhotoUrls = h.PhotoUrls ?? new List<string>()
             }).ToList();
             return dtos;
         }
@@ -56,7 +57,8 @@ namespace BookHub.Controllers
                 ClubId = hall.ClubId,
                 Name = hall.Name,
                 Description = hall.Description,
-                IsDeleted = hall.IsDeleted
+                IsDeleted = hall.IsDeleted,
+                PhotoUrls = hall.PhotoUrls ?? new List<string>()
             };
 
             return dto;
@@ -77,6 +79,7 @@ namespace BookHub.Controllers
             hall.Name = dto.Name;
             hall.Description = dto.Description;
             hall.IsDeleted = dto.IsDeleted;
+            hall.PhotoUrls = dto.PhotoUrls;
 
             try
             {
@@ -102,7 +105,8 @@ namespace BookHub.Controllers
                 ClubId = dto.ClubId,
                 Name = dto.Name,
                 Description = dto.Description,
-                IsDeleted = dto.IsDeleted
+                IsDeleted = dto.IsDeleted,
+                PhotoUrls = dto.PhotoUrls
             };
 
             _context.Halls.Add(hall);

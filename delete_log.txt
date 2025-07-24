@@ -16,3 +16,17 @@
 Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\92dbe9e8-d7be-4b8b-a22c-e810e8256be0.jpg
 Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\dc7d0b98-cb63-471e-9de3-27d8472ad1d1.jpg
 Файл удалён: D:\Visual Studio\2022\Community\source\repos\OynaApi\wwwroot\uploads\clubs\dc7d0b98-cb63-471e-9de3-27d8472ad1d1.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\a9c63121-7796-4afa-8cdd-be93f90d7e0b.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\a9c63121-7796-4afa-8cdd-be93f90d7e0b.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\4b242a6e-3c9a-4240-b6e1-cee861681ef3.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\4b242a6e-3c9a-4240-b6e1-cee861681ef3.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\604afdac-a2cc-4a6e-8e4a-3cf705781221.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\604afdac-a2cc-4a6e-8e4a-3cf705781221.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\022608e0-3a04-4f16-8db5-57347f1ff169.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\022608e0-3a04-4f16-8db5-57347f1ff169.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\268799cf-a710-4648-8ba4-46f21982ee69.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\268799cf-a710-4648-8ba4-46f21982ee69.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\5b1bfdb3-d1e3-4ca3-9426-291a51276af5.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\5b1bfdb3-d1e3-4ca3-9426-291a51276af5.jpg
+Пытаюсь удалить файл: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\5630de86-bbc5-4702-9ad7-486ff74dd75e.jpg
+Файл удалён: D:\Visual Studio\2022\Community\source\repos\BookHub\wwwroot\uploads\clubs\5630de86-bbc5-4702-9ad7-486ff74dd75e.jpg

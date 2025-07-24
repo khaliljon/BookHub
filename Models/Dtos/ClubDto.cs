@@ -12,6 +12,7 @@
         public string OpeningHours { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
+        public string LogoUrl { get; set; }
         public List<HallDto> Halls { get; set; } = new();
     }
 }

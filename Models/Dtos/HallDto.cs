@@ -7,5 +7,6 @@
         public string Name { get; set; }
         public string Description { get; set; }
         public bool IsDeleted { get; set; }
+        public List<string>? PhotoUrls { get; set; }
     }
 }

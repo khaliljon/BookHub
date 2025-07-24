@@ -24,6 +24,9 @@ namespace BookHub.Models
         [Column("is_deleted")]
         public bool IsDeleted { get; set; }
 
+        [Column("photo_urls")]
+        public List<string>? PhotoUrls { get; set; }
+
         public ICollection<Seat> Seats { get; set; }
     }
 }

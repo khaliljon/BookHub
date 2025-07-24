@@ -36,6 +36,9 @@ namespace BookHub.Models
         [Column("is_active")]
         public bool IsActive { get; set; }
 
+        [Column("logo_url")]
+        public string? LogoUrl { get; set; }
+
         public ICollection<Hall> Halls { get; set; }
         public ICollection<Tariff> Tariffs { get; set; }
         public ICollection<ClubPhoto> ClubPhotos { get; set; }

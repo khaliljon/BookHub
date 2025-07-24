@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using BookHub.Models;
 using System;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace BookHub.Data
 {
@@ -24,6 +26,7 @@ namespace BookHub.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Удалён ValueConverter для Hall.PhotoUrls — EF Core с Npgsql поддерживает text[] напрямую
             // Настройка связи многие-ко-многим для User-Role
             modelBuilder.Entity<UserRole>()
                 .HasKey(ur => new { ur.UserId, ur.RoleId });

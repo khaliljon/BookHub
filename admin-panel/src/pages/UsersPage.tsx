@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -43,129 +43,28 @@ import {
   VpnKey,
   Security,
 } from '@mui/icons-material';
+import apiService from '../services/api';
+import { User } from '../types';
 
 const UsersPage: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Моковые данные пользователей
-  const users = [
-    {
-      id: 1,
-      firstName: 'Асылбек',
-      lastName: 'Нурланов',
-      email: 'asylbek.nurlanov@example.com',
-      phone: '+7 705 123 4567',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-      role: 'SuperAdmin',
-      status: 'active',
-      isOnline: true,
-      lastLogin: new Date(2024, 11, 26, 15, 30),
-      createdAt: new Date(2024, 5, 15),
-      totalBookings: 25,
-      totalSpent: 125000,
-      city: 'Алматы',
-      birthday: new Date(1995, 3, 12),
-      isEmailVerified: true,
-      isPhoneVerified: true,
-    },
-    {
-      id: 2,
-      firstName: 'Алия',
-      lastName: 'Сарсенова',
-      email: 'aliya.sarsenova@example.com',
-      phone: '+7 707 234 5678',
-      avatar: 'https://i.pravatar.cc/150?img=2',
-      role: 'Admin',
-      status: 'active',
-      isOnline: false,
-      lastLogin: new Date(2024, 11, 25, 18, 45),
-      createdAt: new Date(2024, 4, 22),
-      totalBookings: 18,
-      totalSpent: 89000,
-      city: 'Астана',
-      birthday: new Date(1992, 8, 8),
-      isEmailVerified: true,
-      isPhoneVerified: false,
-    },
-    {
-      id: 3,
-      firstName: 'Даурен',
-      lastName: 'Муратов',
-      email: 'dauren.muratov@example.com',
-      phone: '+7 775 345 6789',
-      avatar: 'https://i.pravatar.cc/150?img=3',
-      role: 'Manager',
-      status: 'active',
-      isOnline: true,
-      lastLogin: new Date(2024, 11, 26, 14, 15),
-      createdAt: new Date(2024, 3, 10),
-      totalBookings: 32,
-      totalSpent: 156000,
-      city: 'Шымкент',
-      birthday: new Date(1988, 11, 25),
-      isEmailVerified: true,
-      isPhoneVerified: true,
-    },
-    {
-      id: 4,
-      firstName: 'Жанна',
-      lastName: 'Касымова',
-      email: 'zhanna.kasymova@example.com',
-      phone: '+7 708 456 7890',
-      avatar: 'https://i.pravatar.cc/150?img=4',
-      role: 'User',
-      status: 'active',
-      isOnline: false,
-      lastLogin: new Date(2024, 11, 24, 20, 30),
-      createdAt: new Date(2024, 6, 5),
-      totalBookings: 12,
-      totalSpent: 42000,
-      city: 'Алматы',
-      birthday: new Date(1998, 2, 14),
-      isEmailVerified: true,
-      isPhoneVerified: true,
-    },
-    {
-      id: 5,
-      firstName: 'Ерлан',
-      lastName: 'Абдуллаев',
-      email: 'erlan.abdullaev@example.com',
-      phone: '+7 701 567 8901',
-      avatar: 'https://i.pravatar.cc/150?img=5',
-      role: 'User',
-      status: 'blocked',
-      isOnline: false,
-      lastLogin: new Date(2024, 11, 20, 16, 45),
-      createdAt: new Date(2024, 7, 12),
-      totalBookings: 5,
-      totalSpent: 15000,
-      city: 'Караганда',
-      birthday: new Date(1985, 6, 18),
-      isEmailVerified: false,
-      isPhoneVerified: true,
-    },
-    {
-      id: 6,
-      firstName: 'Амина',
-      lastName: 'Тулегенова',
-      email: 'amina.tulegenova@example.com',
-      phone: '+7 747 678 9012',
-      avatar: 'https://i.pravatar.cc/150?img=6',
-      role: 'User',
-      status: 'active',
-      isOnline: true,
-      lastLogin: new Date(2024, 11, 26, 16, 20),
-      createdAt: new Date(2024, 8, 3),
-      totalBookings: 8,
-      totalSpent: 28000,
-      city: 'Астана',
-      birthday: new Date(2001, 4, 30),
-      isEmailVerified: true,
-      isPhoneVerified: false,
-    },
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const data = await apiService.getUsers();
+        setUsers(data);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -229,6 +128,10 @@ const UsersPage: React.FC = () => {
       minute: '2-digit',
     });
   };
+
+  if (loading) {
+    return <Box p={3}><Typography>Загрузка...</Typography></Box>;
+  }
 
   return (
     <Box sx={{ p: 3 }}>

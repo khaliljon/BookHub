@@ -181,7 +181,7 @@ class ApiService {
     return response.data;
   }
 
-  async updateClub(id: number, clubData: Partial<Club>): Promise<Club> {
+  async updateClub(id: number, clubData: Partial<Club> & { isDeleted?: boolean; logoUrl?: string }): Promise<Club> {
     const response: AxiosResponse<Club> = await this.api.put(`/clubs/${id}`, clubData);
     return response.data;
   }
@@ -339,6 +339,12 @@ class ApiService {
   // Удалить фото клуба
   async deleteClubPhoto(photoId: number): Promise<void> {
     await this.api.delete(`/ClubPhotos/${photoId}`);
+  }
+
+  // Обновить фото клуба
+  async updateClubPhoto(id: number, photo: Partial<ClubPhoto>): Promise<ClubPhoto> {
+    const response: AxiosResponse<ClubPhoto> = await this.api.put(`/ClubPhotos/${id}`, photo);
+    return response.data;
   }
 
   // Загрузить фото клуба (upload)
