@@ -4,23 +4,23 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using OynaApi.Data;
-using OynaApi.Models;
-using OynaApi.Models.Dtos;
+using BookHub.Data;
+using BookHub.Models;
+using BookHub.Models.Dtos;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using System;
 
-namespace OynaApi.Controllers
+namespace BookHub.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class ClubPhotosController : ControllerBase
     {
-        private readonly OynaDbContext _context;
+        private readonly BookHubDbContext _context;
 
-        public ClubPhotosController(OynaDbContext context)
+        public ClubPhotosController(BookHubDbContext context)
         {
             _context = context;
         }

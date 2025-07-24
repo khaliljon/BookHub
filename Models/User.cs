@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OynaApi.Models
+namespace BookHub.Models
 {
     [Table("users")]
     public class User

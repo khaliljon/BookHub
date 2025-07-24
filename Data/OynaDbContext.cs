@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using OynaApi.Models;
+using BookHub.Models;
 using System;
 
-namespace OynaApi.Data
+namespace BookHub.Data
 {
-    public class OynaDbContext : DbContext
+    public class BookHubDbContext : DbContext
     {
-        public OynaDbContext(DbContextOptions<OynaDbContext> options) : base(options) { }
+        public BookHubDbContext(DbContextOptions<BookHubDbContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }

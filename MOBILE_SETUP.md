@@ -15,11 +15,11 @@
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=oyna_db;Username=postgres;Password=his_password"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=BookHub;Username=postgres;Password=his_password"
   },
   "Jwt": {
     "Key": "MySuperSecretKey123456789123456789",
-    "Issuer": "OynaApi",
+    "Issuer": "BookHubApi",
     "Audience": "OynaUsers", 
     "ExpiresInDays": "7"
   }
@@ -64,7 +64,7 @@ app.Urls.Add("https://0.0.0.0:7183");
 
 **Пример production URL:**
 ```
-https://oynaapi.yourcompany.com/api/auth/login
+https://bookhubapi.yourcompany.com/api/auth/login
 ```
 
 ## 📱 Для мобильного разработчика

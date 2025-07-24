@@ -1,4 +1,4 @@
-﻿namespace OynaApi.Models
+﻿namespace BookHub.Models
 {
     public class RegisterDto
     {

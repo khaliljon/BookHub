@@ -4,20 +4,20 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using OynaApi.Data;
-using OynaApi.Models;
-using OynaApi.Models.Dtos;
+using BookHub.Data;
+using BookHub.Models;
+using BookHub.Models.Dtos;
 
-namespace OynaApi.Controllers
+namespace BookHub.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class ClubsController : ControllerBase
     {
-        private readonly OynaDbContext _context;
+        private readonly BookHubDbContext _context;
 
-        public ClubsController(OynaDbContext context)
+        public ClubsController(BookHubDbContext context)
         {
             _context = context;
         }
@@ -100,7 +100,7 @@ namespace OynaApi.Controllers
             club.Phone = dto.Phone;
             club.Email = dto.Email;
             club.OpeningHours = dto.OpeningHours;
-            club.IsDeleted = dto.IsDeleted;
+            club.IsActive = dto.IsActive;
 
             try
             {

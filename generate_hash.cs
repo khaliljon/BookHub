@@ -1,6 +1,6 @@
 using BCrypt.Net;
 
-namespace OynaApi
+namespace BookHub
 {
     public class HashGenerator
     {

@@ -4,20 +4,20 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using OynaApi.Data;
-using OynaApi.Models;
-using OynaApi.Models.Dtos;
+using BookHub.Data;
+using BookHub.Models;
+using BookHub.Models.Dtos;
 
-namespace OynaApi.Controllers
+namespace BookHub.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class TariffsController : ControllerBase
     {
-        private readonly OynaDbContext _context;
+        private readonly BookHubDbContext _context;
 
-        public TariffsController(OynaDbContext context)
+        public TariffsController(BookHubDbContext context)
         {
             _context = context;
         }

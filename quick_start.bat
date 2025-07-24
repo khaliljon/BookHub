@@ -32,7 +32,7 @@ echo.
 echo 💡 ПОЛЕЗНЫЕ ССЫЛКИ:
 echo    API документация: https://localhost:7183/swagger
 echo    Админ-панель: http://localhost:3001
-echo    База данных: PostgreSQL (localhost:5432/oyna_db)
+echo    База данных: PostgreSQL (localhost:5432/BookHub)
 echo.
 echo 🚀 ГОТОВЫ НАЧАТЬ? Нажмите любую клавишу...
 pause >nul

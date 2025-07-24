@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace OynaApi.Migrations
+namespace BookHub.Migrations
 {
     /// <inheritdoc />
     public partial class FixUserFields : Migration

@@ -30,6 +30,8 @@ import {
   Tabs,
   Tab,
   GlobalStyles,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -176,8 +178,18 @@ const ClubsPage: React.FC = () => {
   const handleEditSave = async (club: Club | null) => {
     if (!club) return;
     try {
-      await apiService.updateClub(club.id, club);
-      // Обновить список клубов
+      const clubData = {
+        name: club.name,
+        city: club.city,
+        address: club.address,
+        description: club.description,
+        phone: club.phone,
+        email: club.email,
+        openingHours: club.openingHours,
+        isActive: club.isActive,
+        // isDeleted не отправляем при обычном редактировании
+      };
+      await apiService.updateClub(club.id, clubData);
       const updatedClubs = await apiService.getClubs();
       setClubs(updatedClubs);
       setEditClub(null);
@@ -588,6 +600,16 @@ const ClubsPage: React.FC = () => {
               <TextField label="Телефон" value={editClub.phone} onChange={e => setEditClub({...editClub, phone: e.target.value})} />
               <TextField label="Email" value={editClub.email} onChange={e => setEditClub({...editClub, email: e.target.value})} />
               <TextField label="Время работы" value={editClub.openingHours} onChange={e => setEditClub({...editClub, openingHours: e.target.value})} />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={!!editClub.isActive}
+                    onChange={e => setEditClub({ ...editClub, isActive: e.target.checked })}
+                  />
+                }
+                label="Клуб активен"
+                sx={{ mb: 1 }}
+              />
               <Typography sx={{ mt: 2, fontWeight: 'bold' }}>Фото клуба:</Typography>
               <Box sx={{ mb: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {editClubPhotos.length === 0 && <Typography color="text.secondary">Нет фото</Typography>}

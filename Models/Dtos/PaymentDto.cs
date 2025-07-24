@@ -1,4 +1,4 @@
-﻿namespace OynaApi.Models.Dtos
+﻿namespace BookHub.Models.Dtos
 {
     public class PaymentDto
     {

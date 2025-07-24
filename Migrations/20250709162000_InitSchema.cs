@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace OynaApi.Migrations
+namespace BookHub.Migrations
 {
     /// <inheritdoc />
     public partial class InitSchema : Migration

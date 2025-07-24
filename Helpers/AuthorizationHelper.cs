@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
-namespace OynaApi.Helpers
+namespace BookHub.Helpers
 {
     public static class AuthorizationHelper
     {

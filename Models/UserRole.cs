@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OynaApi.Models
+namespace BookHub.Models
 {
     [Table("user_roles")]
     public class UserRole

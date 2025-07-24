@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OynaApi.Models
+namespace BookHub.Models
 {
     [Table("audit_logs")]
     public class AuditLog

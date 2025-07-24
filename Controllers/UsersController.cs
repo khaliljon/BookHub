@@ -5,21 +5,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using OynaApi.Data;
-using OynaApi.Models;
-using OynaApi.Models.Dtos;
-using OynaApi.Helpers;
+using BookHub.Data;
+using BookHub.Models;
+using BookHub.Models.Dtos;
+using BookHub.Helpers;
 
-namespace OynaApi.Controllers
+namespace BookHub.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class UsersController : ControllerBase
     {
-        private readonly OynaDbContext _context;
+        private readonly BookHubDbContext _context;
 
-        public UsersController(OynaDbContext context)
+        public UsersController(BookHubDbContext context)
         {
             _context = context;
         }

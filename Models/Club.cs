@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OynaApi.Models
+namespace BookHub.Models
 {
     [Table("clubs")]
     public class Club
@@ -32,6 +32,9 @@ namespace OynaApi.Models
 
         [Column("is_deleted")]
         public bool IsDeleted { get; set; }
+
+        [Column("is_active")]
+        public bool IsActive { get; set; }
 
         public ICollection<Hall> Halls { get; set; }
         public ICollection<Tariff> Tariffs { get; set; }

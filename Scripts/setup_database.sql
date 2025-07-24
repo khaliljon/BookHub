@@ -1,5 +1,14 @@
 -- =====================================================
--- SETUP DATABASE SCRIPT FOR OYNA API
+-- SETUP DATABASE SCRIPT FOR BOOKHUB
+-- =====================================================
+
+-- Удаление старой базы и создание новой
+DROP DATABASE IF EXISTS oyna_db;
+CREATE DATABASE "BookHub";
+\c BookHub
+
+-- =====================================================
+-- SETUP DATABASE SCRIPT FOR BOOKHUB API
 -- =====================================================
 
 -- =====================================================
@@ -77,7 +86,8 @@ CREATE TABLE clubs (
     opening_hours VARCHAR(100),
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
-    is_deleted BOOLEAN DEFAULT FALSE    -- Soft delete
+    is_deleted BOOLEAN DEFAULT FALSE,    -- Soft delete
+    is_active BOOLEAN DEFAULT TRUE      -- Статус активности клуба
 );
 
 -- Таблица пользователей (создаем после clubs для внешнего ключа managed_club_id)
@@ -1074,10 +1084,10 @@ COMMENT ON PROCEDURE process_booking_batch(INTEGER[], TEXT) IS 'Массовая
 
 === БЕЗОПАСНОСТЬ И ДОСТУП ===
 15. Подключение от имени приложения:
-    psql -h localhost -d oyna_db -U app_user
+    psql -h localhost -d BookHub -U app_user
 
 16. Подключение от имени администратора:
-    psql -h localhost -d oyna_db -U admin_user
+    psql -h localhost -d BookHub -U admin_user
 
 17. Проверка прав пользователя:
     SELECT grantee, privilege_type, table_name 
@@ -1732,7 +1742,7 @@ SELECT 'AI Analytics Engine успешно развернут!' AS status,
        'Функций ИИ: 6, Индексов: 8, Готов к production!' AS details;
 
 
-SELECT 'База данных OynaApi успешно настроена!' AS status,
+SELECT 'База данных BookHub успешно настроена!' AS status,
        'Функции: ' || 
        (SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema = 'public' AND routine_type = 'FUNCTION') ||
        ', Процедуры: ' ||

@@ -1,6 +1,6 @@
 using BCrypt.Net;
 
-namespace OynaApi.Helpers
+namespace BookHub.Helpers
 {
     public static class PasswordHelper
     {

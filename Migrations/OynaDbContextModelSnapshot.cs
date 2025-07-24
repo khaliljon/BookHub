@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using OynaApi.Data;
+using BookHub.Data;
 
 #nullable disable
 
-namespace OynaApi.Migrations
+namespace BookHub.Migrations
 {
-    [DbContext(typeof(OynaDbContext))]
-    partial class OynaDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(BookHubDbContext))]
+    partial class BookHubDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -146,6 +146,10 @@ namespace OynaApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("email");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
@@ -163,7 +167,7 @@ namespace OynaApi.Migrations
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("phone");
+                        .HasColumnName("phone_number");
 
                     b.HasKey("Id");
 
@@ -396,21 +400,28 @@ namespace OynaApi.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Администратор системы",
+                            Description = "Суперадминистратор - полный доступ ко всем функциям системы",
+                            IsActive = true,
+                            Name = "SuperAdmin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Администратор - управление клубами, залами, местами, тарифами",
                             IsActive = true,
                             Name = "Admin"
                         },
                         new
                         {
-                            Id = 2,
-                            Description = "Менеджер клуба",
+                            Id = 3,
+                            Description = "Менеджер клуба - управление бронированиями по своему клубу",
                             IsActive = true,
                             Name = "Manager"
                         },
                         new
                         {
-                            Id = 3,
-                            Description = "Обычный пользователь",
+                            Id = 4,
+                            Description = "Обычный пользователь - бронирование мест",
                             IsActive = true,
                             Name = "User"
                         });

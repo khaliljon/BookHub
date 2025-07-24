@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using OynaApi.Data;
+using BookHub.Data;
 
 #nullable disable
 
-namespace OynaApi.Migrations
+namespace BookHub.Migrations
 {
-    [DbContext(typeof(OynaDbContext))]
+    [DbContext(typeof(BookHubDbContext))]
     [Migration("20250709162000_InitSchema")]
     partial class InitSchema
     {
@@ -25,7 +25,7 @@ namespace OynaApi.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("OynaApi.Models.AuditLog", b =>
+            modelBuilder.Entity("BookHub.Models.AuditLog", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -63,7 +63,7 @@ namespace OynaApi.Migrations
                     b.ToTable("audit_logs");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Booking", b =>
+            modelBuilder.Entity("BookHub.Models.Booking", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -120,7 +120,7 @@ namespace OynaApi.Migrations
                     b.ToTable("bookings");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Club", b =>
+            modelBuilder.Entity("BookHub.Models.Club", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -173,7 +173,7 @@ namespace OynaApi.Migrations
                     b.ToTable("clubs");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.ClubPhoto", b =>
+            modelBuilder.Entity("BookHub.Models.ClubPhoto", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -207,7 +207,7 @@ namespace OynaApi.Migrations
                     b.ToTable("club_photos");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.ComputerSpec", b =>
+            modelBuilder.Entity("BookHub.Models.ComputerSpec", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -257,7 +257,7 @@ namespace OynaApi.Migrations
                     b.ToTable("computer_specs");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Hall", b =>
+            modelBuilder.Entity("BookHub.Models.Hall", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -291,7 +291,7 @@ namespace OynaApi.Migrations
                     b.ToTable("halls");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Notification", b =>
+            modelBuilder.Entity("BookHub.Models.Notification", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -329,7 +329,7 @@ namespace OynaApi.Migrations
                     b.ToTable("notifications");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Payment", b =>
+            modelBuilder.Entity("BookHub.Models.Payment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -367,7 +367,7 @@ namespace OynaApi.Migrations
                     b.ToTable("payments");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Seat", b =>
+            modelBuilder.Entity("BookHub.Models.Seat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -406,7 +406,7 @@ namespace OynaApi.Migrations
                     b.ToTable("seats");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Tariff", b =>
+            modelBuilder.Entity("BookHub.Models.Tariff", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -444,7 +444,7 @@ namespace OynaApi.Migrations
                     b.ToTable("tariffs");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.User", b =>
+            modelBuilder.Entity("BookHub.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -494,28 +494,28 @@ namespace OynaApi.Migrations
                     b.ToTable("users");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.AuditLog", b =>
+            modelBuilder.Entity("BookHub.Models.AuditLog", b =>
                 {
-                    b.HasOne("OynaApi.Models.User", "User")
+                    b.HasOne("BookHub.Models.User", "User")
                         .WithMany("AuditLogs")
                         .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Booking", b =>
+            modelBuilder.Entity("BookHub.Models.Booking", b =>
                 {
-                    b.HasOne("OynaApi.Models.Seat", "Seat")
+                    b.HasOne("BookHub.Models.Seat", "Seat")
                         .WithMany("Bookings")
                         .HasForeignKey("SeatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OynaApi.Models.Tariff", "Tariff")
+                    b.HasOne("BookHub.Models.Tariff", "Tariff")
                         .WithMany("Bookings")
                         .HasForeignKey("TariffId");
 
-                    b.HasOne("OynaApi.Models.User", "User")
+                    b.HasOne("BookHub.Models.User", "User")
                         .WithMany("Bookings")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -528,9 +528,9 @@ namespace OynaApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.ClubPhoto", b =>
+            modelBuilder.Entity("BookHub.Models.ClubPhoto", b =>
                 {
-                    b.HasOne("OynaApi.Models.Club", "Club")
+                    b.HasOne("BookHub.Models.Club", "Club")
                         .WithMany("ClubPhotos")
                         .HasForeignKey("ClubId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -539,20 +539,20 @@ namespace OynaApi.Migrations
                     b.Navigation("Club");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.ComputerSpec", b =>
+            modelBuilder.Entity("BookHub.Models.ComputerSpec", b =>
                 {
-                    b.HasOne("OynaApi.Models.Seat", "Seat")
+                    b.HasOne("BookHub.Models.Seat", "Seat")
                         .WithOne("ComputerSpec")
-                        .HasForeignKey("OynaApi.Models.ComputerSpec", "SeatId")
+                        .HasForeignKey("BookHub.Models.ComputerSpec", "SeatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Seat");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Hall", b =>
+            modelBuilder.Entity("BookHub.Models.Hall", b =>
                 {
-                    b.HasOne("OynaApi.Models.Club", "Club")
+                    b.HasOne("BookHub.Models.Club", "Club")
                         .WithMany("Halls")
                         .HasForeignKey("ClubId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -561,9 +561,9 @@ namespace OynaApi.Migrations
                     b.Navigation("Club");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Notification", b =>
+            modelBuilder.Entity("BookHub.Models.Notification", b =>
                 {
-                    b.HasOne("OynaApi.Models.User", "User")
+                    b.HasOne("BookHub.Models.User", "User")
                         .WithMany("Notifications")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -572,9 +572,9 @@ namespace OynaApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Payment", b =>
+            modelBuilder.Entity("BookHub.Models.Payment", b =>
                 {
-                    b.HasOne("OynaApi.Models.Booking", "Booking")
+                    b.HasOne("BookHub.Models.Booking", "Booking")
                         .WithMany("Payments")
                         .HasForeignKey("BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -583,9 +583,9 @@ namespace OynaApi.Migrations
                     b.Navigation("Booking");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Seat", b =>
+            modelBuilder.Entity("BookHub.Models.Seat", b =>
                 {
-                    b.HasOne("OynaApi.Models.Hall", "Hall")
+                    b.HasOne("BookHub.Models.Hall", "Hall")
                         .WithMany("Seats")
                         .HasForeignKey("HallId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -594,9 +594,9 @@ namespace OynaApi.Migrations
                     b.Navigation("Hall");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Tariff", b =>
+            modelBuilder.Entity("BookHub.Models.Tariff", b =>
                 {
-                    b.HasOne("OynaApi.Models.Club", "Club")
+                    b.HasOne("BookHub.Models.Club", "Club")
                         .WithMany("Tariffs")
                         .HasForeignKey("ClubId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -605,12 +605,12 @@ namespace OynaApi.Migrations
                     b.Navigation("Club");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Booking", b =>
+            modelBuilder.Entity("BookHub.Models.Booking", b =>
                 {
                     b.Navigation("Payments");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Club", b =>
+            modelBuilder.Entity("BookHub.Models.Club", b =>
                 {
                     b.Navigation("ClubPhotos");
 
@@ -619,12 +619,12 @@ namespace OynaApi.Migrations
                     b.Navigation("Tariffs");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Hall", b =>
+            modelBuilder.Entity("BookHub.Models.Hall", b =>
                 {
                     b.Navigation("Seats");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Seat", b =>
+            modelBuilder.Entity("BookHub.Models.Seat", b =>
                 {
                     b.Navigation("Bookings");
 
@@ -632,12 +632,12 @@ namespace OynaApi.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("OynaApi.Models.Tariff", b =>
+            modelBuilder.Entity("BookHub.Models.Tariff", b =>
                 {
                     b.Navigation("Bookings");
                 });
 
-            modelBuilder.Entity("OynaApi.Models.User", b =>
+            modelBuilder.Entity("BookHub.Models.User", b =>
                 {
                     b.Navigation("AuditLogs");
 

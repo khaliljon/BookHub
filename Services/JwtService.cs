@@ -5,9 +5,9 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using OynaApi.Models;
+using BookHub.Models;
 
-namespace OynaApi.Services
+namespace BookHub.Services
 {
     public class JwtService
     {

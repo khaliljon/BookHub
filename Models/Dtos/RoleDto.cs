@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace OynaApi.Models.Dtos
+namespace BookHub.Models.Dtos
 {
     public class RoleDto
     {

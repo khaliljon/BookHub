@@ -12,15 +12,15 @@ using BookHub.Data;
 namespace BookHub.Migrations
 {
     [DbContext(typeof(BookHubDbContext))]
-    [Migration("20250718171458_FixAuditLogRecordIdNullable")]
-    partial class FixAuditLogRecordIdNullable
+    [Migration("20250724074234_AddIsActiveToClubs")]
+    partial class AddIsActiveToClubs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.6")
+                .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -95,11 +95,11 @@ namespace BookHub.Migrations
 
                     b.Property<TimeSpan>("TimeEnd")
                         .HasColumnType("interval")
-                        .HasColumnName("time_end");
+                        .HasColumnName("end_time");
 
                     b.Property<TimeSpan>("TimeStart")
                         .HasColumnType("interval")
-                        .HasColumnName("time_start");
+                        .HasColumnName("start_time");
 
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("numeric")
@@ -149,6 +149,10 @@ namespace BookHub.Migrations
                         .HasColumnType("text")
                         .HasColumnName("email");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
@@ -166,7 +170,7 @@ namespace BookHub.Migrations
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("phone");
+                        .HasColumnName("phone_number");
 
                     b.HasKey("Id");
 
@@ -399,21 +403,28 @@ namespace BookHub.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Администратор системы",
+                            Description = "Суперадминистратор - полный доступ ко всем функциям системы",
+                            IsActive = true,
+                            Name = "SuperAdmin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Администратор - управление клубами, залами, местами, тарифами",
                             IsActive = true,
                             Name = "Admin"
                         },
                         new
                         {
-                            Id = 2,
-                            Description = "Менеджер клуба",
+                            Id = 3,
+                            Description = "Менеджер клуба - управление бронированиями по своему клубу",
                             IsActive = true,
                             Name = "Manager"
                         },
                         new
                         {
-                            Id = 3,
-                            Description = "Обычный пользователь",
+                            Id = 4,
+                            Description = "Обычный пользователь - бронирование мест",
                             IsActive = true,
                             Name = "User"
                         });
@@ -509,6 +520,10 @@ namespace BookHub.Migrations
                         .HasColumnType("numeric")
                         .HasColumnName("balance");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text")
@@ -519,14 +534,18 @@ namespace BookHub.Migrations
                         .HasColumnType("text")
                         .HasColumnName("full_name");
 
-                    b.Property<string>("HashedPassword")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("hashed_password");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
+
+                    b.Property<int?>("ManagedClubId")
+                        .HasColumnType("integer")
+                        .HasColumnName("managed_club_id");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("password_hash");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -537,11 +556,13 @@ namespace BookHub.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("points");
 
-                    b.Property<DateTime>("RegistrationDate")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("registration_date");
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ManagedClubId");
 
                     b.ToTable("users");
                 });
@@ -559,10 +580,6 @@ namespace BookHub.Migrations
                     b.Property<DateTime>("AssignedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("assigned_at");
-
-                    b.Property<int?>("AssignedBy")
-                        .HasColumnType("integer")
-                        .HasColumnName("assigned_by");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -680,6 +697,15 @@ namespace BookHub.Migrations
                         .IsRequired();
 
                     b.Navigation("Club");
+                });
+
+            modelBuilder.Entity("BookHub.Models.User", b =>
+                {
+                    b.HasOne("BookHub.Models.Club", "ManagedClub")
+                        .WithMany()
+                        .HasForeignKey("ManagedClubId");
+
+                    b.Navigation("ManagedClub");
                 });
 
             modelBuilder.Entity("BookHub.Models.UserRole", b =>

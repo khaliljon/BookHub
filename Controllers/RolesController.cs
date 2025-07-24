@@ -1,25 +1,25 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OynaApi.Attributes;
-using OynaApi.Data;
-using OynaApi.Models;
-using OynaApi.Models.Dtos;
+using BookHub.Attributes;
+using BookHub.Data;
+using BookHub.Models;
+using BookHub.Models.Dtos;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
 
-namespace OynaApi.Controllers
+namespace BookHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "SuperAdmin,Admin")]
     public class RolesController : ControllerBase
     {
-        private readonly OynaDbContext _context;
+        private readonly BookHubDbContext _context;
 
-        public RolesController(OynaDbContext context)
+        public RolesController(BookHubDbContext context)
         {
             _context = context;
         }

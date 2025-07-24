@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace OynaApi.Migrations
+namespace BookHub.Migrations
 {
     /// <inheritdoc />
     public partial class UpdateRoleSystemWithNullableFields : Migration

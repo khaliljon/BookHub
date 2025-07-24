@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace OynaApi.Migrations
+namespace BookHub.Migrations
 {
     /// <inheritdoc />
     public partial class AddRoleSystem : Migration

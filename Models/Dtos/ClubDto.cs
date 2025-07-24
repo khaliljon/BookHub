@@ -1,4 +1,4 @@
-﻿namespace OynaApi.Models.Dtos
+﻿namespace BookHub.Models.Dtos
 {
     public class ClubDto
     {
@@ -11,5 +11,7 @@
         public string Email { get; set; }
         public string OpeningHours { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsActive { get; set; }
+        public List<HallDto> Halls { get; set; } = new();
     }
 }

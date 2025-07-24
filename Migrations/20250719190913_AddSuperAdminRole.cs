@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace OynaApi.Migrations
+namespace BookHub.Migrations
 {
     /// <inheritdoc />
     public partial class AddSuperAdminRole : Migration
@@ -11,14 +11,14 @@ namespace OynaApi.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "assigned_by",
-                table: "user_roles");
+            // migrationBuilder.DropColumn(
+            //     name: "assigned_by",
+            //     table: "user_roles");
 
-            migrationBuilder.RenameColumn(
-                name: "registration_date",
-                table: "users",
-                newName: "updated_at");
+            // migrationBuilder.RenameColumn(
+            //     name: "registration_date",
+            //     table: "users",
+            //     newName: "updated_at");
 
             migrationBuilder.RenameColumn(
                 name: "hashed_password",
@@ -80,10 +80,10 @@ namespace OynaApi.Migrations
                 name: "managed_club_id",
                 table: "users");
 
-            migrationBuilder.RenameColumn(
-                name: "updated_at",
-                table: "users",
-                newName: "registration_date");
+            // migrationBuilder.RenameColumn(
+            //     name: "updated_at",
+            //     table: "users",
+            //     newName: "registration_date");
 
             migrationBuilder.RenameColumn(
                 name: "password_hash",

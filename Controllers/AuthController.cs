@@ -1,25 +1,25 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OynaApi.Data;
-using OynaApi.Services;
-using OynaApi.Models;
-using OynaApi.Models.Dtos;
-using OynaApi.Helpers;
+using BookHub.Data;
+using BookHub.Services;
+using BookHub.Models;
+using BookHub.Models.Dtos;
+using BookHub.Helpers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Linq;
 using BCrypt.Net;
 
-namespace OynaApi.Controllers
+namespace BookHub.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly OynaDbContext _context;
+        private readonly BookHubDbContext _context;
         private readonly JwtService _jwtService;
 
-        public AuthController(OynaDbContext context, JwtService jwtService)
+        public AuthController(BookHubDbContext context, JwtService jwtService)
         {
             _context = context;
             _jwtService = jwtService;

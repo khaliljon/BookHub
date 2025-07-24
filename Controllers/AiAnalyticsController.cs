@@ -1,23 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using OynaApi.Data;
+using BookHub.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using Npgsql;
 
-namespace OynaApi.Controllers
+namespace BookHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "SuperAdmin,Admin,Manager")]
     public class AiAnalyticsController : ControllerBase
     {
-        private readonly OynaDbContext _context;
+        private readonly BookHubDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AiAnalyticsController> _logger;
 
         public AiAnalyticsController(
-            OynaDbContext context,
+            BookHubDbContext context,
             IConfiguration configuration,
             ILogger<AiAnalyticsController> logger)
         {

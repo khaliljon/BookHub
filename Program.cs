@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using OynaApi.Data;
+using BookHub.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using OynaApi.Services;
-using OynaApi.Models;
+using BookHub.Services;
+using BookHub.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,10 +21,10 @@ builder.Services.AddCors(options =>
 });
 
 // PostgreSQL
-builder.Services.AddDbContext<OynaDbContext>(options =>
+builder.Services.AddDbContext<BookHubDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// �����������
+// 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -81,7 +81,7 @@ var app = builder.Build();
 // Инициализация ролей при запуске (роли создаются через SQL скрипт)
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<OynaDbContext>();
+    var context = scope.ServiceProvider.GetRequiredService<BookHubDbContext>();
     
     // Создаем роли, если их нет (резервный способ)
     if (!await context.Roles.AnyAsync())
