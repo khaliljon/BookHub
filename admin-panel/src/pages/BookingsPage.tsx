@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -45,161 +45,91 @@ import {
   Edit,
   Delete,
 } from '@mui/icons-material';
+import apiService from '../services/api';
+import { Booking, BookingStatus } from '../types';
 
 const BookingsPage: React.FC = () => {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterClub, setFilterClub] = useState('all');
 
-  // Моковые данные бронирований
-  const bookings = [
-    {
-      id: 1,
-      userId: 1,
-      userName: 'Асылбек Нурланов',
-      userAvatar: 'https://i.pravatar.cc/150?img=1',
-      clubId: 1,
-      clubName: 'CyberArena Almaty',
-      hallId: 1,
-      hallName: 'Основной зал',
-      seatNumber: 15,
-      startTime: new Date(2024, 11, 25, 14, 0),
-      endTime: new Date(2024, 11, 25, 16, 0),
-      totalCost: 2400,
-      status: 'confirmed',
-      paymentStatus: 'paid',
-      createdAt: new Date(2024, 11, 20, 10, 30),
-      gameType: 'CS:GO',
-    },
-    {
-      id: 2,
-      userId: 2,
-      userName: 'Алия Сарсенова',
-      userAvatar: 'https://i.pravatar.cc/150?img=2',
-      clubId: 1,
-      clubName: 'CyberArena Almaty',
-      hallId: 2,
-      hallName: 'VIP зал',
-      seatNumber: 8,
-      startTime: new Date(2024, 11, 25, 18, 0),
-      endTime: new Date(2024, 11, 25, 20, 30),
-      totalCost: 4500,
-      status: 'confirmed',
-      paymentStatus: 'paid',
-      createdAt: new Date(2024, 11, 22, 15, 45),
-      gameType: 'Dota 2',
-    },
-    {
-      id: 3,
-      userId: 3,
-      userName: 'Даурен Муратов',
-      userAvatar: 'https://i.pravatar.cc/150?img=3',
-      clubId: 2,
-      clubName: 'GameZone Astana',
-      hallId: 3,
-      hallName: 'Турнирный зал',
-      seatNumber: 22,
-      startTime: new Date(2024, 11, 26, 12, 0),
-      endTime: new Date(2024, 11, 26, 15, 0),
-      totalCost: 5400,
-      status: 'pending',
-      paymentStatus: 'pending',
-      createdAt: new Date(2024, 11, 24, 9, 15),
-      gameType: 'Valorant',
-    },
-    {
-      id: 4,
-      userId: 4,
-      userName: 'Жанна Касымова',
-      userAvatar: 'https://i.pravatar.cc/150?img=4',
-      clubId: 1,
-      clubName: 'CyberArena Almaty',
-      hallId: 1,
-      hallName: 'Основной зал',
-      seatNumber: 7,
-      startTime: new Date(2024, 11, 26, 20, 0),
-      endTime: new Date(2024, 11, 26, 22, 0),
-      totalCost: 2400,
-      status: 'cancelled',
-      paymentStatus: 'refunded',
-      createdAt: new Date(2024, 11, 23, 14, 20),
-      gameType: 'League of Legends',
-    },
-    {
-      id: 5,
-      userId: 5,
-      userName: 'Ерлан Абдуллаев',
-      userAvatar: 'https://i.pravatar.cc/150?img=5',
-      clubId: 3,
-      clubName: 'ProGaming Shymkent',
-      hallId: 4,
-      hallName: 'Киберспорт зал',
-      seatNumber: 12,
-      startTime: new Date(2024, 11, 27, 16, 30),
-      endTime: new Date(2024, 11, 27, 19, 0),
-      totalCost: 3600,
-      status: 'confirmed',
-      paymentStatus: 'paid',
-      createdAt: new Date(2024, 11, 24, 11, 0),
-      gameType: 'Fortnite',
-    },
-  ];
+  useEffect(() => {
+    const fetchBookings = async () => {
+      setLoading(true);
+      try {
+        const data = await apiService.getBookings(1, 100);
+        setBookings(data.items || data); // поддержка пагинации и простого массива
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'success';
-      case 'pending': return 'warning';
-      case 'cancelled': return 'error';
+      case BookingStatus.CONFIRMED: return 'success';
+      case BookingStatus.PENDING: return 'warning';
+      case BookingStatus.CANCELLED: return 'error';
       default: return 'default';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'confirmed': return <CheckIcon />;
-      case 'pending': return <PendingIcon />;
-      case 'cancelled': return <CancelIcon />;
+      case BookingStatus.CONFIRMED: return <CheckIcon />;
+      case BookingStatus.PENDING: return <PendingIcon />;
+      case BookingStatus.CANCELLED: return <CancelIcon />;
       default: return <ScheduleIcon />;
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'Подтверждено';
-      case 'pending': return 'Ожидает';
-      case 'cancelled': return 'Отменено';
+      case BookingStatus.CONFIRMED: return 'Подтверждено';
+      case BookingStatus.PENDING: return 'Ожидает';
+      case BookingStatus.CANCELLED: return 'Отменено';
       default: return status;
     }
   };
 
   // Статистика
   const totalBookings = bookings.length;
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
-  const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+  const confirmedBookings = bookings.filter(b => b.status === BookingStatus.CONFIRMED).length;
+  const pendingBookings = bookings.filter(b => b.status === BookingStatus.PENDING).length;
   const totalRevenue = bookings
-    .filter(b => b.paymentStatus === 'paid')
-    .reduce((sum, b) => sum + b.totalCost, 0);
+    .filter(b => b.payments?.some(p => p.status === 'Completed'))
+    .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
 
-  // Фильтрация
+  // 1. Собираем уникальные статусы и клубы из данных
+  const uniqueStatuses = Array.from(new Set(bookings.map(b => b.status))).filter(Boolean);
+  const uniqueClubs = Array.from(new Set(bookings.map(b => b.seat?.hall?.club?.name))).filter(Boolean);
+
+  // 2. Фильтрация по статусу и клубу
   const filteredBookings = bookings.filter(booking => {
     const statusMatch = filterStatus === 'all' || booking.status === filterStatus;
-    const clubMatch = filterClub === 'all' || booking.clubId.toString() === filterClub;
+    const clubMatch = filterClub === 'all' || booking.seat?.hall?.club?.name === filterClub;
     return statusMatch && clubMatch;
   });
 
-  const formatDateTime = (date: Date) => {
-    return date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+  // 3. Корректное отображение времени
+  const formatDateTime = (dateStr: string, timeStr: string) => {
+    if (!dateStr || !timeStr) return '';
+    const dt = new Date(`${dateStr}T${timeStr}`);
+    if (isNaN(dt.getTime())) return '';
+    return dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+  const formatTime = (dateStr: string, timeStr: string) => {
+    if (!dateStr || !timeStr) return '';
+    const dt = new Date(`${dateStr}T${timeStr}`);
+    if (isNaN(dt.getTime())) return '';
+    return dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ru-RU', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  if (loading) {
+    return <Box p={3}><Typography>Загрузка...</Typography></Box>;
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -320,13 +250,13 @@ const BookingsPage: React.FC = () => {
                   size="small"
                   label="Статус"
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
+                  onChange={e => setFilterStatus(e.target.value)}
                   sx={{ minWidth: 150 }}
                 >
                   <MenuItem value="all">Все статусы</MenuItem>
-                  <MenuItem value="confirmed">Подтверждено</MenuItem>
-                  <MenuItem value="pending">Ожидает</MenuItem>
-                  <MenuItem value="cancelled">Отменено</MenuItem>
+                  {uniqueStatuses.map(status => (
+                    <MenuItem key={status} value={status}>{status}</MenuItem>
+                  ))}
                 </TextField>
 
                 <TextField
@@ -334,13 +264,13 @@ const BookingsPage: React.FC = () => {
                   size="small"
                   label="Клуб"
                   value={filterClub}
-                  onChange={(e) => setFilterClub(e.target.value)}
+                  onChange={e => setFilterClub(e.target.value)}
                   sx={{ minWidth: 200 }}
                 >
                   <MenuItem value="all">Все клубы</MenuItem>
-                  <MenuItem value="1">CyberArena Almaty</MenuItem>
-                  <MenuItem value="2">GameZone Astana</MenuItem>
-                  <MenuItem value="3">ProGaming Shymkent</MenuItem>
+                  {uniqueClubs.map(club => (
+                    <MenuItem key={club} value={club}>{club}</MenuItem>
+                  ))}
                 </TextField>
 
                 <Button
@@ -385,17 +315,14 @@ const BookingsPage: React.FC = () => {
                       >
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar 
-                              src={booking.userAvatar} 
-                              sx={{ width: 40, height: 40 }}
-                            />
+                            <Avatar sx={{ width: 40, height: 40 }}>
+                              {booking.user?.fullName ? booking.user.fullName[0] : '?'}
+                            </Avatar>
                             <Box>
                               <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                {booking.userName}
+                                {booking.user?.fullName || ''}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {booking.gameType}
-                              </Typography>
+                              {/* booking.gameType удалён, такого поля нет */}
                             </Box>
                           </Box>
                         </TableCell>
@@ -403,10 +330,10 @@ const BookingsPage: React.FC = () => {
                         <TableCell>
                           <Box>
                             <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {booking.clubName}
+                              {booking.seat?.hall?.club?.name || ''}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {booking.hallName}
+                              {booking.seat?.hall?.name || ''}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -414,17 +341,17 @@ const BookingsPage: React.FC = () => {
                         <TableCell>
                           <Box>
                             <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {formatDateTime(booking.startTime)}
+                              {formatDateTime(booking.createdAt, booking.startTime)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                              {formatTime(booking.createdAt, booking.startTime)} - {formatTime(booking.createdAt, booking.endTime)}
                             </Typography>
                           </Box>
                         </TableCell>
                         
                         <TableCell>
                           <Chip 
-                            label={`Место ${booking.seatNumber}`}
+                            label={`Место ${booking.seat?.seatNumber || booking.seat?.id || ''}`}
                             variant="outlined"
                             size="small"
                             icon={<Computer />}
@@ -433,7 +360,7 @@ const BookingsPage: React.FC = () => {
                         
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                            ₸{booking.totalCost.toLocaleString()}
+                            ₸{(booking.totalAmount || 0).toLocaleString()}
                           </Typography>
                         </TableCell>
                         
@@ -449,17 +376,17 @@ const BookingsPage: React.FC = () => {
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1 }}>
                             <Tooltip title="Просмотр">
-                              <IconButton size="small" sx={{ color: '#1976d2' }}>
+                              <IconButton size="small" sx={{ color: '#1976d2' }} onClick={() => alert(`Просмотр бронирования #${booking.id}`)}>
                                 <Visibility fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Редактировать">
-                              <IconButton size="small" sx={{ color: '#ed6c02' }}>
+                              <IconButton size="small" sx={{ color: '#ed6c02' }} onClick={() => alert(`Редактировать бронирование #${booking.id}`)}>
                                 <Edit fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Удалить">
-                              <IconButton size="small" sx={{ color: '#d32f2f' }}>
+                              <IconButton size="small" sx={{ color: '#d32f2f' }} onClick={() => alert(`Удалить бронирование #${booking.id}`)}>
                                 <Delete fontSize="small" />
                               </IconButton>
                             </Tooltip>
@@ -488,16 +415,15 @@ const BookingsPage: React.FC = () => {
                   <React.Fragment key={booking.id}>
                     <ListItem sx={{ px: 0 }}>
                       <ListItemAvatar>
-                        <Avatar 
-                          src={booking.userAvatar}
-                          sx={{ width: 36, height: 36 }}
-                        />
+                        <Avatar sx={{ width: 36, height: 36 }}>
+                          {booking.user?.fullName ? booking.user.fullName[0] : '?'}
+                        </Avatar>
                       </ListItemAvatar>
                       <ListItemText
                         primary={
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {booking.userName}
+                              {booking.user?.fullName || ''}
                             </Typography>
                             <Chip
                               label={getStatusText(booking.status)}
@@ -510,11 +436,11 @@ const BookingsPage: React.FC = () => {
                         secondary={
                           <Box>
                             <Typography variant="caption" color="text.secondary">
-                              {booking.clubName} • ₸{booking.totalCost}
+                              {booking.seat?.hall?.club?.name || ''} • ₸{(booking.totalAmount || 0).toLocaleString()}
                             </Typography>
                             <br />
                             <Typography variant="caption" color="text.secondary">
-                              {formatTime(booking.createdAt)}
+                              {formatTime(booking.createdAt, booking.startTime)}
                             </Typography>
                           </Box>
                         }

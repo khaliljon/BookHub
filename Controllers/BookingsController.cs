@@ -26,12 +26,36 @@ namespace BookHub.Controllers
 
         // GET: api/Bookings (свои бронирования или все для админа/менеджера)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookingDto>>> GetBookings()
+        public async Task<ActionResult<IEnumerable<object>>> GetBookings()
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager");
+            var userIdClaim = User.Claims.FirstOrDefault(x => x.Type == "id" || x.Type == ClaimTypes.NameIdentifier);
+            var emailClaim = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email);
 
-            IQueryable<Booking> query = _context.Bookings;
+            int currentUserId;
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out currentUserId))
+            {
+                // Всё ок, используем userId
+            }
+            else if (emailClaim != null)
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == emailClaim.Value);
+                if (user == null)
+                    return Forbid("Пользователь с таким email не найден.");
+                currentUserId = user.Id;
+            }
+            else
+            {
+                return Forbid("Не найден id пользователя или email в клеймах.");
+            }
+            var isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager") || User.IsInRole("SuperAdmin");
+
+            IQueryable<Booking> query = _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Seat)
+                    .ThenInclude(s => s.Hall)
+                        .ThenInclude(h => h.Club)
+                .Include(b => b.Tariff)
+                .Include(b => b.Payments);
 
             // Обычные пользователи видят только свои бронирования
             if (!isAdminOrManager)
@@ -41,20 +65,101 @@ namespace BookHub.Controllers
 
             var bookings = await query.ToListAsync();
 
-            var dtos = bookings.Select(b => new BookingDto
+            if (isAdminOrManager)
             {
-                Id = b.Id,
-                UserId = b.UserId,
-                SeatId = b.SeatId,
-                TariffId = b.TariffId,
-                Date = b.Date,
-                TimeStart = b.TimeStart,
-                TimeEnd = b.TimeEnd,
-                TotalPrice = b.TotalPrice,
-                Status = b.Status
-            }).ToList();
-
-            return dtos;
+                var dtos = bookings.Select(b => new BookingDetailsDto
+                {
+                    Id = b.Id,
+                    UserId = b.UserId,
+                    SeatId = b.SeatId,
+                    TariffId = b.TariffId,
+                    Date = b.Date,
+                    StartTime = b.TimeStart.ToString(),
+                    EndTime = b.TimeEnd.ToString(),
+                    TotalAmount = b.TotalPrice,
+                    Status = b.Status,
+                    CreatedAt = b.CreatedAt,
+                    User = b.User == null ? null : new UserDto
+                    {
+                        Id = b.User.Id,
+                        FullName = b.User.FullName,
+                        PhoneNumber = b.User.PhoneNumber,
+                        Email = b.User.Email,
+                        CreatedAt = b.User.CreatedAt,
+                        Balance = b.User.Balance,
+                        Points = b.User.Points,
+                        IsDeleted = b.User.IsDeleted,
+                        Roles = b.User.UserRoles?.Select(ur => ur.Role.Name).ToList() ?? new List<string>()
+                    },
+                    Seat = b.Seat == null ? null : new SeatDetailsDto
+                    {
+                        Id = b.Seat.Id,
+                        HallId = b.Seat.HallId,
+                        SeatNumber = b.Seat.SeatNumber,
+                        Description = b.Seat.Description,
+                        Status = b.Seat.Status,
+                        IsDeleted = b.Seat.IsDeleted,
+                        Hall = b.Seat.Hall == null ? null : new HallDetailsDto
+                        {
+                            Id = b.Seat.Hall.Id,
+                            ClubId = b.Seat.Hall.ClubId,
+                            Name = b.Seat.Hall.Name,
+                            Description = b.Seat.Hall.Description,
+                            IsDeleted = b.Seat.Hall.IsDeleted,
+                            PhotoUrls = b.Seat.Hall.PhotoUrls,
+                            Club = b.Seat.Hall.Club == null ? null : new ClubDto
+                            {
+                                Id = b.Seat.Hall.Club.Id,
+                                Name = b.Seat.Hall.Club.Name,
+                                City = b.Seat.Hall.Club.City,
+                                Address = b.Seat.Hall.Club.Address,
+                                Description = b.Seat.Hall.Club.Description,
+                                Phone = b.Seat.Hall.Club.Phone,
+                                Email = b.Seat.Hall.Club.Email,
+                                OpeningHours = b.Seat.Hall.Club.OpeningHours,
+                                IsDeleted = b.Seat.Hall.Club.IsDeleted,
+                                IsActive = b.Seat.Hall.Club.IsActive,
+                                LogoUrl = b.Seat.Hall.Club.LogoUrl
+                            }
+                        }
+                    },
+                    Tariff = b.Tariff == null ? null : new TariffDto
+                    {
+                        Id = b.Tariff.Id,
+                        ClubId = b.Tariff.ClubId,
+                        Name = b.Tariff.Name,
+                        Description = b.Tariff.Description,
+                        PricePerHour = b.Tariff.PricePerHour,
+                        IsNightTariff = b.Tariff.IsNightTariff
+                    },
+                    Payments = b.Payments?.Select(p => new PaymentDto
+                    {
+                        Id = p.Id,
+                        BookingId = p.BookingId,
+                        Amount = p.Amount,
+                        PaymentMethod = p.PaymentMethod,
+                        PaymentStatus = p.PaymentStatus,
+                        PaidAt = p.PaidAt
+                    }).ToList() ?? new List<PaymentDto>()
+                }).ToList();
+                return dtos;
+            }
+            else
+            {
+                var dtos = bookings.Select(b => new BookingDto
+                {
+                    Id = b.Id,
+                    UserId = b.UserId,
+                    SeatId = b.SeatId,
+                    TariffId = b.TariffId,
+                    Date = b.Date,
+                    TimeStart = b.TimeStart,
+                    TimeEnd = b.TimeEnd,
+                    TotalPrice = b.TotalPrice,
+                    Status = b.Status
+                }).ToList();
+                return dtos;
+            }
         }
 
         // GET: api/Bookings/5 (свое бронирование или админ/менеджер)
