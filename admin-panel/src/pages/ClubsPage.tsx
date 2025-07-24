@@ -179,6 +179,7 @@ const ClubsPage: React.FC = () => {
     if (!club) return;
     try {
       const clubData = {
+        id: club.id, // обязательно для PUT
         name: club.name,
         city: club.city,
         address: club.address,
@@ -186,8 +187,7 @@ const ClubsPage: React.FC = () => {
         phone: club.phone,
         email: club.email,
         openingHours: club.openingHours,
-        isActive: club.isActive,
-        // isDeleted не отправляем при обычном редактировании
+        isActive: club.isActive
       };
       await apiService.updateClub(club.id, clubData);
       const updatedClubs = await apiService.getClubs();

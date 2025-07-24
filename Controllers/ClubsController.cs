@@ -37,7 +37,8 @@ namespace BookHub.Controllers
                 Phone = club.Phone,
                 Email = club.Email,
                 OpeningHours = club.OpeningHours,
-                IsDeleted = club.IsDeleted
+                IsDeleted = club.IsDeleted,
+                IsActive = club.IsActive
             }).ToList();
             return dtos;
         }
@@ -61,7 +62,8 @@ namespace BookHub.Controllers
                 Phone = club.Phone,
                 Email = club.Email,
                 OpeningHours = club.OpeningHours,
-                IsDeleted = club.IsDeleted
+                IsDeleted = club.IsDeleted,
+                IsActive = club.IsActive
             };
             return dto;
         }
@@ -130,13 +132,15 @@ namespace BookHub.Controllers
                 Phone = dto.Phone,
                 Email = dto.Email,
                 OpeningHours = dto.OpeningHours,
-                IsDeleted = dto.IsDeleted
+                IsDeleted = dto.IsDeleted,
+                IsActive = dto.IsActive
             };
 
             _context.Clubs.Add(club);
             await _context.SaveChangesAsync();
 
             dto.Id = club.Id;
+            dto.IsActive = club.IsActive;
 
             return CreatedAtAction(nameof(GetClub), new { id = club.Id }, dto);
         }
