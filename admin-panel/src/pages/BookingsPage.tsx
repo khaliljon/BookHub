@@ -47,10 +47,10 @@ import {
   Delete,
 } from '@mui/icons-material';
 import apiService from '../services/api';
-import { Booking, BookingStatus } from '../types';
+import { Booking, BookingStatus, BookingCamel } from '../types';
 
 const BookingsPage: React.FC = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<BookingCamel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -62,7 +62,22 @@ const BookingsPage: React.FC = () => {
       setError(null);
       try {
         const data = await apiService.getBookings(1, 100);
-        setBookings(data.items || data); // поддержка пагинации и простого массива
+        // Маппинг: приводим к camelCase, если пришли поля с большой буквы
+        const mapBooking = (b: any): BookingCamel => ({
+          ...b,
+          date: b.date || b.Date || '',
+          startTime: b.startTime || b.StartTime || '',
+          endTime: b.endTime || b.EndTime || '',
+          createdAt: b.createdAt || b.CreatedAt || '',
+          totalAmount: b.totalAmount || b.TotalAmount || 0,
+        });
+        const bookingsArr: BookingCamel[] = (data.items || data).map(mapBooking);
+        setBookings(bookingsArr);
+        // DEBUG: посмотреть реальные поля
+        if (bookingsArr.length > 0) {
+          // eslint-disable-next-line no-console
+          console.log('booking sample:', bookingsArr[0]);
+        }
       } catch (err: any) {
         setError(err.message || 'Ошибка загрузки бронирований');
       } finally {
@@ -72,7 +87,7 @@ const BookingsPage: React.FC = () => {
     fetchBookings();
   }, []);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined) => {
     switch (status) {
       case BookingStatus.CONFIRMED: return 'success';
       case BookingStatus.PENDING: return 'warning';
@@ -81,7 +96,7 @@ const BookingsPage: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | undefined) => {
     switch (status) {
       case BookingStatus.CONFIRMED: return <CheckIcon />;
       case BookingStatus.PENDING: return <PendingIcon />;
@@ -90,12 +105,12 @@ const BookingsPage: React.FC = () => {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: string | undefined) => {
     switch (status) {
       case BookingStatus.CONFIRMED: return 'Подтверждено';
       case BookingStatus.PENDING: return 'Ожидает';
       case BookingStatus.CANCELLED: return 'Отменено';
-      default: return status;
+      default: return status || '';
     }
   };
 
@@ -121,14 +136,17 @@ const BookingsPage: React.FC = () => {
   // 3. Корректное отображение времени
   const formatDateTime = (dateStr: string, timeStr: string) => {
     if (!dateStr || !timeStr) return '';
-    const dt = new Date(`${dateStr}T${timeStr}`);
+    // Фикс для TimeSpan типа "01:00:00" чтобы не было ошибки на Safari
+    let t = timeStr.length === 5 ? timeStr + ':00' : timeStr;
+    const dt = new Date(`${dateStr}T${t}`);
     if (isNaN(dt.getTime())) return '';
     return dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
   const formatTime = (dateStr: string, timeStr: string) => {
     if (!dateStr || !timeStr) return '';
-    const dt = new Date(`${dateStr}T${timeStr}`);
-    if (isNaN(dt.getTime())) return '';
+    let t = timeStr.length === 5 ? timeStr + ':00' : timeStr;
+    const dt = new Date(`${dateStr}T${t}`);
+    if (isNaN(dt.getTime())) return timeStr.substring(0,5);
     return dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -349,10 +367,10 @@ const BookingsPage: React.FC = () => {
                         <TableCell>
                           <Box>
                             <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {formatDateTime(booking.createdAt, booking.startTime)}
+                              {formatDateTime(booking.date, booking.startTime)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {formatTime(booking.createdAt, booking.startTime)} - {formatTime(booking.createdAt, booking.endTime)}
+                              {formatTime(booking.date, booking.startTime)} - {formatTime(booking.date, booking.endTime)}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -374,9 +392,9 @@ const BookingsPage: React.FC = () => {
                         
                         <TableCell>
                           <Chip
-                            icon={getStatusIcon(booking.status)}
-                            label={getStatusText(booking.status)}
-                            color={getStatusColor(booking.status)}
+                            icon={getStatusIcon(booking.status || '')}
+                            label={getStatusText(booking.status || '')}
+                            color={getStatusColor(booking.status || '')}
                             size="small"
                           />
                         </TableCell>
@@ -434,8 +452,8 @@ const BookingsPage: React.FC = () => {
                               {booking.user?.fullName || ''}
                             </Typography>
                             <Chip
-                              label={getStatusText(booking.status)}
-                              color={getStatusColor(booking.status)}
+                              label={getStatusText(booking.status || '')}
+                              color={getStatusColor(booking.status || '')}
                               size="small"
                               sx={{ height: 20, fontSize: '10px' }}
                             />

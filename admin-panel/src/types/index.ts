@@ -71,19 +71,40 @@ export interface Seat {
 
 export interface Booking {
   id: number;
-  userId: number;
-  seatId: number;
-  tariffId: number;
+  userId?: number;
+  seatId?: number;
+  tariffId?: number;
+  // Дата и время (camelCase и PascalCase)
+  date?: string;
+  Date?: string;
+  startTime?: string;
+  StartTime?: string;
+  endTime?: string;
+  EndTime?: string;
+  createdAt?: string;
+  CreatedAt?: string;
+  // Сумма (camelCase и PascalCase)
+  totalAmount?: number;
+  TotalAmount?: number;
+  // Статус
+  status?: BookingStatus | string;
+  Status?: BookingStatus | string;
+  // Пользователь, место, тариф
+  user?: User;
+  seat?: Seat;
+  tariff?: Tariff;
+  payments?: Payment[];
+  // ...добавляй другие поля по аналогии
+}
+
+// Тип для фронта с гарантированными camelCase полями
+export type BookingCamel = Booking & {
+  date: string;
   startTime: string;
   endTime: string;
-  totalAmount: number;
-  status: BookingStatus;
   createdAt: string;
-  user: User;
-  seat: Seat;
-  tariff: Tariff;
-  payments: Payment[];
-}
+  totalAmount: number;
+};
 
 export interface Payment {
   id: number;
