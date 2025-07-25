@@ -33,6 +33,7 @@ import {
   CalendarToday,
   Schedule,
 } from '@mui/icons-material';
+import ChartsBlock from '../components/ChartsBlock';
 
 const OverviewPage: React.FC = () => {
   // Моковые данные для обзора
@@ -286,6 +287,9 @@ const OverviewPage: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Красочные графики и диаграммы */}
+      <ChartsBlock />
 
       {/* Быстрые показатели */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

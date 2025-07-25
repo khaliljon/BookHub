@@ -40,12 +40,12 @@ namespace BookHub.Controllers
             {
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == emailClaim.Value);
                 if (user == null)
-                    return Forbid("Пользователь с таким email не найден.");
+                    return Unauthorized("Пользователь с таким email не найден.");
                 currentUserId = user.Id;
             }
             else
             {
-                return Forbid("Не найден id пользователя или email в клеймах.");
+                return Unauthorized("Не найден id пользователя или email в клеймах.");
             }
             var isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager") || User.IsInRole("SuperAdmin");
 

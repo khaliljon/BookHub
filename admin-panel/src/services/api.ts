@@ -255,13 +255,21 @@ class ApiService {
       pageSize: pageSize.toString(),
       ...filters
     });
-    const response: AxiosResponse<PaginatedResponse<Booking>> = await this.api.get(`/bookings?${params}`);
-    return response.data;
+    try {
+      const response: AxiosResponse<PaginatedResponse<Booking>> = await this.api.get(`/bookings?${params}`);
+      return response.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || 'Ошибка загрузки бронирований');
+    }
   }
 
   async getBookingById(id: number): Promise<Booking> {
-    const response: AxiosResponse<Booking> = await this.api.get(`/bookings/${id}`);
-    return response.data;
+    try {
+      const response: AxiosResponse<Booking> = await this.api.get(`/bookings/${id}`);
+      return response.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || 'Ошибка загрузки бронирования');
+    }
   }
 
   async createBooking(bookingData: Partial<Booking>): Promise<Booking> {

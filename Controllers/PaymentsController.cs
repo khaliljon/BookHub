@@ -28,7 +28,14 @@ namespace BookHub.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PaymentDto>>> GetPayments()
         {
-            var payments = await _context.Payments.ToListAsync();
+            var payments = await _context.Payments
+                .Include(p => p.Booking)
+                    .ThenInclude(b => b.User)
+                .Include(p => p.Booking)
+                    .ThenInclude(b => b.Seat)
+                        .ThenInclude(s => s.Hall)
+                            .ThenInclude(h => h.Club)
+                .ToListAsync();
 
             var dtos = payments.Select(p => new PaymentDto
             {
@@ -37,7 +44,10 @@ namespace BookHub.Controllers
                 Amount = p.Amount,
                 PaymentMethod = p.PaymentMethod,
                 PaymentStatus = p.PaymentStatus,
-                PaidAt = p.PaidAt
+                PaidAt = p.PaidAt,
+                UserName = p.Booking?.User?.FullName ?? "-",
+                ClubName = p.Booking?.Seat?.Hall?.Club?.Name ?? "-",
+                UserAvatar = "https://i.pravatar.cc/150?u=" + (p.Booking?.User?.Email ?? "user")
             }).ToList();
 
             return dtos;

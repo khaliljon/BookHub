@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -41,94 +41,38 @@ import {
   AccountBalanceWallet,
   MonetizationOn,
 } from '@mui/icons-material';
+import { useAuth } from '../utils/AuthContext';
 
 const PaymentsPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterMethod, setFilterMethod] = useState('all');
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { token } = useAuth();
 
-  // Моковые данные платежей
-  const payments = [
-    {
-      id: 'PAY-001',
-      userId: 1,
-      userName: 'Асылбек Нурланов',
-      userAvatar: 'https://i.pravatar.cc/150?img=1',
-      bookingId: 'BOOK-001',
-      amount: 2400,
-      method: 'card',
-      status: 'completed',
-      createdAt: new Date(2024, 11, 25, 14, 30),
-      processedAt: new Date(2024, 11, 25, 14, 31),
-      clubName: 'CyberArena Almaty',
-      description: 'Бронирование на 2 часа',
-      transactionId: 'TXN-789456123',
-      fee: 48,
-    },
-    {
-      id: 'PAY-002',
-      userId: 2,
-      userName: 'Алия Сарсенова',
-      userAvatar: 'https://i.pravatar.cc/150?img=2',
-      bookingId: 'BOOK-002',
-      amount: 4500,
-      method: 'kaspi',
-      status: 'completed',
-      createdAt: new Date(2024, 11, 25, 16, 45),
-      processedAt: new Date(2024, 11, 25, 16, 46),
-      clubName: 'CyberArena Almaty',
-      description: 'VIP зал на 2.5 часа',
-      transactionId: 'KAS-456789012',
-      fee: 90,
-    },
-    {
-      id: 'PAY-003',
-      userId: 3,
-      userName: 'Даурен Муратов',
-      userAvatar: 'https://i.pravatar.cc/150?img=3',
-      bookingId: 'BOOK-003',
-      amount: 5400,
-      method: 'bank_transfer',
-      status: 'pending',
-      createdAt: new Date(2024, 11, 26, 10, 15),
-      processedAt: null,
-      clubName: 'GameZone Astana',
-      description: 'Турнирный зал на 3 часа',
-      transactionId: 'BANK-234567890',
-      fee: 0,
-    },
-    {
-      id: 'PAY-004',
-      userId: 4,
-      userName: 'Жанна Касымова',
-      userAvatar: 'https://i.pravatar.cc/150?img=4',
-      bookingId: 'BOOK-004',
-      amount: 2400,
-      method: 'card',
-      status: 'refunded',
-      createdAt: new Date(2024, 11, 24, 18, 20),
-      processedAt: new Date(2024, 11, 24, 18, 22),
-      clubName: 'CyberArena Almaty',
-      description: 'Возврат за отмену',
-      transactionId: 'REF-345678901',
-      fee: -48,
-    },
-    {
-      id: 'PAY-005',
-      userId: 5,
-      userName: 'Ерлан Абдуллаев',
-      userAvatar: 'https://i.pravatar.cc/150?img=5',
-      bookingId: 'BOOK-005',
-      amount: 3600,
-      method: 'wallet',
-      status: 'completed',
-      createdAt: new Date(2024, 11, 23, 12, 30),
-      processedAt: new Date(2024, 11, 23, 12, 30),
-      clubName: 'ProGaming Shymkent',
-      description: 'Игровая сессия 2.5 часа',
-      transactionId: 'WAL-567890123',
-      fee: 36,
-    },
-  ];
+  useEffect(() => {
+    fetch('/api/payments', {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      },
+      credentials: 'include'
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Ошибка авторизации или получения данных');
+        return res.json();
+      })
+      .then(data => {
+        setPayments(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setLoading(false);
+        setPayments([]);
+        alert(err.message);
+      });
+  }, [token]);
+  if (loading) return <div>Загрузка...</div>;
+  if (!payments.length) return <div>Нет данных о платежах</div>;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -182,34 +126,39 @@ const PaymentsPage: React.FC = () => {
 
   // Статистика
   const totalAmount = payments
-    .filter(p => p.status === 'completed')
+    .filter(p => p.paymentStatus === 'успешно' || p.paymentStatus === 'completed')
     .reduce((sum, p) => sum + p.amount, 0);
-  
+
   const pendingAmount = payments
-    .filter(p => p.status === 'pending')
+    .filter(p => p.paymentStatus === 'ожидание' || p.paymentStatus === 'pending')
     .reduce((sum, p) => sum + p.amount, 0);
-  
-  const totalFees = payments
-    .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + p.fee, 0);
+
+  // totalFees можно убрать или реализовать, если появится поле комиссии
+  const totalFees = 0;
 
   // Фильтрация
   const filteredPayments = payments.filter(payment => {
-    const statusMatch = filterStatus === 'all' || payment.status === filterStatus;
-    const methodMatch = filterMethod === 'all' || payment.method === filterMethod;
+    const statusMatch = filterStatus === 'all' || payment.paymentStatus === filterStatus;
+    const methodMatch = filterMethod === 'all' || payment.paymentMethod === filterMethod;
     return statusMatch && methodMatch;
   });
 
-  const formatDateTime = (date: Date) => {
-    return date.toLocaleDateString('ru-RU', {
+  const formatDateTime = (date: any) => {
+    if (!date) return '-';
+    const d = new Date(date);
+    if (isNaN(d as any)) return '-';
+    return d.toLocaleDateString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
     });
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ru-RU', {
+  const formatTime = (date: any) => {
+    if (!date) return '-';
+    const d = new Date(date);
+    if (isNaN(d as any)) return '-';
+    return d.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -273,7 +222,7 @@ const PaymentsPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                     <PendingIcon sx={{ fontSize: 16, mr: 0.5 }} />
                     <Typography variant="caption">
-                      {payments.filter(p => p.status === 'pending').length} транз.
+                      {payments.filter(p => p.paymentStatus === 'pending').length} транз.
                     </Typography>
                   </Box>
                 </Box>
@@ -327,7 +276,7 @@ const PaymentsPage: React.FC = () => {
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                     <Typography variant="caption">
-                      Успешных: {payments.filter(p => p.status === 'completed').length}
+                      Успешных: {payments.filter(p => p.paymentStatus === 'completed').length}
                     </Typography>
                   </Box>
                 </Box>
@@ -447,9 +396,9 @@ const PaymentsPage: React.FC = () => {
                           <Box>
                             <Typography variant="body2" sx={{ 
                               fontWeight: 'bold', 
-                              color: payment.status === 'refunded' ? '#f44336' : '#2e7d32' 
+                              color: payment.paymentStatus === 'refunded' ? '#f44336' : '#2e7d32' 
                             }}>
-                              {payment.status === 'refunded' ? '-' : ''}₸{payment.amount.toLocaleString()}
+                              {payment.paymentStatus === 'refunded' ? '-' : ''}₸{payment.amount.toLocaleString()}
                             </Typography>
                             {payment.fee !== 0 && (
                               <Typography variant="caption" color="text.secondary">
@@ -461,8 +410,8 @@ const PaymentsPage: React.FC = () => {
                         
                         <TableCell>
                           <Chip
-                            icon={getMethodIcon(payment.method)}
-                            label={getMethodText(payment.method)}
+                            icon={getMethodIcon(payment.paymentMethod)}
+                            label={getMethodText(payment.paymentMethod)}
                             variant="outlined"
                             size="small"
                           />
@@ -470,9 +419,9 @@ const PaymentsPage: React.FC = () => {
                         
                         <TableCell>
                           <Chip
-                            icon={getStatusIcon(payment.status)}
-                            label={getStatusText(payment.status)}
-                            color={getStatusColor(payment.status)}
+                            icon={getStatusIcon(payment.paymentStatus)}
+                            label={getStatusText(payment.paymentStatus)}
+                            color={getStatusColor(payment.paymentStatus)}
                             size="small"
                           />
                         </TableCell>
@@ -480,10 +429,10 @@ const PaymentsPage: React.FC = () => {
                         <TableCell>
                           <Box>
                             <Typography variant="body2">
-                              {formatDateTime(payment.createdAt)}
+                              {formatDateTime(payment.paidAt)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {formatTime(payment.createdAt)}
+                              {formatTime(payment.paidAt)}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -522,10 +471,10 @@ const PaymentsPage: React.FC = () => {
 
               <List sx={{ p: 0 }}>
                 {[
-                  { name: 'Банковская карта', count: payments.filter(p => p.method === 'card').length, color: '#1976d2' },
-                  { name: 'Kaspi Pay', count: payments.filter(p => p.method === 'kaspi').length, color: '#2e7d32' },
-                  { name: 'Банковский перевод', count: payments.filter(p => p.method === 'bank_transfer').length, color: '#ed6c02' },
-                  { name: 'Электронный кошелек', count: payments.filter(p => p.method === 'wallet').length, color: '#9c27b0' },
+                  { name: 'Банковская карта', count: payments.filter(p => p.paymentMethod === 'card').length, color: '#1976d2' },
+                  { name: 'Kaspi Pay', count: payments.filter(p => p.paymentMethod === 'kaspi').length, color: '#2e7d32' },
+                  { name: 'Банковский перевод', count: payments.filter(p => p.paymentMethod === 'bank_transfer').length, color: '#ed6c02' },
+                  { name: 'Электронный кошелек', count: payments.filter(p => p.paymentMethod === 'wallet').length, color: '#9c27b0' },
                 ].map((method, index) => (
                   <React.Fragment key={method.name}>
                     <ListItem sx={{ px: 0, py: 1 }}>
@@ -578,21 +527,21 @@ const PaymentsPage: React.FC = () => {
                               variant="body2" 
                               sx={{ 
                                 fontWeight: 'bold',
-                                color: payment.status === 'refunded' ? '#f44336' : '#2e7d32'
+                                color: payment.paymentStatus === 'refunded' ? '#f44336' : '#2e7d32'
                               }}
                             >
-                              {payment.status === 'refunded' ? '-' : ''}₸{payment.amount.toLocaleString()}
+                              {payment.paymentStatus === 'refunded' ? '-' : ''}₸{payment.amount.toLocaleString()}
                             </Typography>
                           </Box>
                         }
                         secondary={
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="caption">
-                              {getMethodText(payment.method)}
+                              {getMethodText(payment.paymentMethod)}
                             </Typography>
                             <Chip
-                              label={getStatusText(payment.status)}
-                              color={getStatusColor(payment.status)}
+                              label={getStatusText(payment.paymentStatus)}
+                              color={getStatusColor(payment.paymentStatus)}
                               size="small"
                               sx={{ fontSize: '10px', height: 20 }}
                             />

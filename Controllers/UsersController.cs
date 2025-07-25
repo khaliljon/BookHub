@@ -113,6 +113,29 @@ namespace BookHub.Controllers
             user.Points = dto.Points;
             user.IsDeleted = dto.IsDeleted;
 
+            // --- Обработка обновления ролей пользователя ---
+            if (dto.Roles != null)
+            {
+                // Удаляем старые роли
+                var currentUserRoles = await _context.UserRoles.Where(ur => ur.UserId == user.Id).ToListAsync();
+                _context.UserRoles.RemoveRange(currentUserRoles);
+
+                // Добавляем новые роли
+                foreach (var roleName in dto.Roles)
+                {
+                    var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+                    if (role != null)
+                    {
+                        _context.UserRoles.Add(new UserRole
+                        {
+                            UserId = user.Id,
+                            RoleId = role.Id,
+                            AssignedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+
             try
             {
                 await _context.SaveChangesAsync();

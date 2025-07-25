@@ -1,523 +1,374 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Chip,
-  Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Tooltip,
-  TextField,
-  MenuItem,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Divider,
-  Badge,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Snackbar,
-  Alert,
+  Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Avatar, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  CircularProgress, Snackbar, MenuItem, Chip, Grid, Divider, Alert, FormControl, InputLabel, Select, OutlinedInput, FormHelperText, Box, Tooltip
 } from '@mui/material';
-import {
-  People as PeopleIcon,
-  PersonAdd as AddPersonIcon,
-  Block as BlockIcon,
-  CheckCircle as ActiveIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility,
-  Email,
-  Phone,
-  LocationOn,
-  CalendarToday,
-  TrendingUp,
-  PersonOff,
-  VpnKey,
-  Security,
-} from '@mui/icons-material';
-import apiService from '../services/api';
+import { Add, Edit, Delete, Visibility } from '@mui/icons-material';
+import { useAuth } from '../utils/AuthContext';
+import { fetchUsers, createUser, updateUser, deleteUser } from '../services/usersApi';
 import { User, UserRoles } from '../types';
 
+const ALL_ROLES: UserRoles[] = [
+  UserRoles.SUPER_ADMIN,
+  UserRoles.ADMIN,
+  UserRoles.MANAGER,
+  UserRoles.USER
+];
+
+const roleColors: Record<UserRoles, any> = {
+  [UserRoles.SUPER_ADMIN]: 'error',
+  [UserRoles.ADMIN]: 'warning',
+  [UserRoles.MANAGER]: 'primary',
+  [UserRoles.USER]: 'success'
+};
+
 const UsersPage: React.FC = () => {
+  const { hasRole } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openView, setOpenView] = useState<User | null>(null);
+  const [openEdit, setOpenEdit] = useState<User | null>(null);
+  const [openDelete, setOpenDelete] = useState<User | null>(null);
+  const [openCreate, setOpenCreate] = useState(false);
+  const [snackbar, setSnackbar] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [addUserOpen, setAddUserOpen] = useState(false);
-  const [addUserLoading, setAddUserLoading] = useState(false);
-  const [addUserError, setAddUserError] = useState('');
-  const [addUserSuccess, setAddUserSuccess] = useState('');
-  const [newUser, setNewUser] = useState({
-    fullName: '',
-    email: '',
-    phoneNumber: '',
-    password: '',
-    roles: [UserRoles.USER] as UserRoles[],
-  });
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        const data = await apiService.getUsers();
-        setUsers(data);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsers();
+    setLoading(true);
+    fetchUsers()
+      .then(setUsers)
+      .finally(() => setLoading(false));
   }, []);
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'SuperAdmin': return 'error';
-      case 'Admin': return 'warning';
-      case 'Manager': return 'info';
-      case 'User': return 'default';
-      default: return 'default';
+  const filteredUsers = users.filter(u =>
+    (filterRole === 'all' || (u.roles && u.roles.some(r => (typeof r === 'string' ? r : r.name) === filterRole))) &&
+    (u.fullName?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const canEdit = hasRole(UserRoles.SUPER_ADMIN) || hasRole(UserRoles.ADMIN);
+  const canDelete = hasRole(UserRoles.SUPER_ADMIN);
+  const canCreate = hasRole(UserRoles.SUPER_ADMIN) || hasRole(UserRoles.ADMIN);
+
+  const handleCreate = (data: Partial<User>) => {
+    createUser(data as any).then(newUser => {
+      setUsers([...users, newUser]);
+      setOpenCreate(false);
+      setSnackbar('Пользователь создан');
+    });
+  };
+
+  const handleUpdate = (data: Partial<User>) => {
+    const canEditSensitive = hasRole(UserRoles.SUPER_ADMIN) || hasRole(UserRoles.ADMIN);
+    const payload: any = {
+      id: data.id,
+      fullName: data.fullName,
+      phoneNumber: data.phoneNumber,
+      email: data.email,
+      roles: data.roles,
+    };
+    if (canEditSensitive) {
+      if (data.managedClubId != null) payload.managedClubId = data.managedClubId;
+      if (data.balance !== undefined) payload.balance = data.balance;
+      if (data.points !== undefined) payload.points = data.points;
+      if (data.isDeleted !== undefined) payload.isDeleted = data.isDeleted;
+    }
+    if ((data as any).password) payload.password = (data as any).password;
+    updateUser(payload).then(() => {
+      setUsers(users => users.map(u => u.id === data.id ? { ...u, ...data } : u));
+      setOpenEdit(null);
+      setSnackbar('Пользователь обновлен');
+    });
+  };
+
+  const handleDelete = (id: number) => {
+    deleteUser(id).then(() => {
+      setUsers(users.filter(u => u.id !== id));
+      setOpenDelete(null);
+      setSnackbar('Пользователь удален');
+    });
+  };
+
+  return (
+    <>
+      <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>👥 Пользователи</Typography>
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <TextField
+          label="Поиск"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          size="small"
+        />
+        <TextField
+          select
+          label="Роль"
+          value={filterRole}
+          onChange={e => setFilterRole(e.target.value)}
+          size="small"
+          sx={{ minWidth: 150 }}
+        >
+          <MenuItem value="all">Все роли</MenuItem>
+          {ALL_ROLES.map(role => <MenuItem value={role} key={role}>{role}</MenuItem>)}
+        </TextField>
+        {canCreate && (
+          <Button variant="contained" startIcon={<Add />} onClick={() => setOpenCreate(true)}>
+            Новый пользователь
+          </Button>
+        )}
+      </Box>
+      {loading ? (
+        <CircularProgress />
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Аватар</TableCell>
+                <TableCell>Имя</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Роли</TableCell>
+                <TableCell>Клуб</TableCell>
+                <TableCell>Баланс</TableCell>
+                <TableCell>Действия</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredUsers.map(u => (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <Avatar src={`https://i.pravatar.cc/150?u=${u.email}`} />
+                  </TableCell>
+                  <TableCell>{u.fullName}</TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell>
+                    {(u.roles || []).map((r, i) => {
+                      const roleName = typeof r === 'string' ? r : r.name;
+                      return (
+                        <Chip
+                          key={i}
+                          label={roleName}
+                          color={roleColors[roleName as UserRoles] || 'default'}
+                          size="small"
+                          sx={{ mr: 0.5 }}
+                        />
+                      );
+                    })}
+                  </TableCell>
+                  <TableCell>{u.managedClubId || '-'}</TableCell>
+                  <TableCell>{u.balance}₸</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Посмотреть">
+                        <IconButton
+                          size="small"
+                          sx={{ color: '#1976d2', bgcolor: '#e3f2fd', '&:hover': { bgcolor: '#bbdefb' } }}
+                          onClick={() => setOpenView(u)}
+                        >
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      {canEdit && (
+                        <Tooltip title="Редактировать">
+                          <IconButton
+                            size="small"
+                            sx={{ color: '#ed6c02', bgcolor: '#fff3e0', '&:hover': { bgcolor: '#ffe0b2' } }}
+                            onClick={() => setOpenEdit(u)}
+                          >
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {canDelete && (
+                        <Tooltip title="Удалить">
+                          <IconButton
+                            size="small"
+                            sx={{ color: '#d32f2f', bgcolor: '#ffebee', '&:hover': { bgcolor: '#ffcdd2' } }}
+                            onClick={() => setOpenDelete(u)}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+      <UserDialog open={!!openView} user={openView || {}} onClose={() => setOpenView(null)} readOnly />
+      <UserDialog open={!!openEdit} user={openEdit || {}} onClose={() => setOpenEdit(null)} onSave={handleUpdate} />
+      <UserDialog open={openCreate} user={{}} onClose={() => setOpenCreate(false)} onSave={handleCreate} />
+      <Dialog open={!!openDelete} onClose={() => setOpenDelete(null)}>
+        <DialogTitle>Удалить пользователя?</DialogTitle>
+        <DialogContent>Вы уверены, что хотите удалить пользователя {openDelete?.fullName}?</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDelete(null)}>Отмена</Button>
+          <Button color="error" onClick={() => handleDelete(openDelete!.id)}>Удалить</Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar open={!!snackbar} autoHideDuration={3000} onClose={() => setSnackbar(null)} message={snackbar} />
+    </>
+  );
+};
+
+const UserDialog = ({ open, user = {}, onClose, onSave, readOnly = false }: any) => {
+  const [form, setForm] = useState<any>({ ...user, roles: user.roles || [] });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => { setForm({ ...user, roles: user.roles || [] }); setError(null); }, [user, open]);
+
+  const handleChange = (field: string, value: any) => {
+    setForm((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const roles = Array.isArray(form.roles)
+        ? form.roles.map((r: any) => typeof r === 'string' ? r : r.name)
+        : [];
+      const payload: any = {
+        id: form.id,
+        fullName: form.fullName,
+        phoneNumber: form.phoneNumber,
+        email: form.email,
+        roles,
+      };
+      if (form.password) payload.password = form.password;
+      if (form.managedClubId !== undefined) payload.managedClubId = form.managedClubId;
+      if (form.balance !== undefined) payload.balance = form.balance;
+      await onSave(payload);
+    } catch (e: any) {
+      setError(e.message || 'Ошибка сохранения');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Статистика
-  const totalUsers = users.length;
-
-  // Фильтрация
-  const filteredUsers = users.filter(user => {
-    const roleMatch = filterRole === 'all' || (Array.isArray(user.roles) && user.roles.some(r => (typeof r === 'string' ? r : r.name) === filterRole));
-    const searchMatch = searchTerm === '' ||
-      (user.fullName && user.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (user.phoneNumber && user.phoneNumber.includes(searchTerm));
-    return roleMatch && searchMatch;
-  });
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
-  const formatDateTime = (date: Date) => {
-    return date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  if (loading) {
-    return <Box p={3}><Typography>Загрузка...</Typography></Box>;
-  }
-
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Заголовок */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', mb: 1 }}>
-          👥 Управление пользователями
-        </Typography>
-        <Typography variant="subtitle1" sx={{ color: '#666' }}>
-          Администрирование аккаунтов и ролей
-        </Typography>
-      </Box>
-
-      {/* Статистика */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#1976d2',
-            color: 'white',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {totalUsers}
-                  </Typography>
-                  <Typography variant="body2">
-                    Всего пользователей
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <TrendingUp sx={{ fontSize: 16, mr: 0.5 }} />
-                    <Typography variant="caption">+8 за месяц</Typography>
-                  </Box>
-                </Box>
-                <PeopleIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          minWidth: 500,
+          maxWidth: 720,
+          borderRadius: 4,
+          p: 0,
+        }
+      }}
+    >
+      <DialogTitle sx={{ pt: 3, pb: 2, fontWeight: 700, fontSize: 22 }}>
+        {readOnly ? 'Просмотр пользователя' : (user?.id ? 'Редактировать пользователя' : 'Новый пользователь')}
+      </DialogTitle>
+      <DialogContent sx={{ px: 4, pt: 1, pb: 0 }}>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Имя"
+              value={form.fullName || ''}
+              onChange={e => handleChange('fullName', e.target.value)}
+              disabled={readOnly || loading}
+              fullWidth
+              variant="outlined"
+              margin="dense"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Email"
+              value={form.email || ''}
+              onChange={e => handleChange('email', e.target.value)}
+              disabled={readOnly || loading}
+              fullWidth
+              variant="outlined"
+              margin="dense"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Телефон"
+              value={form.phoneNumber || ''}
+              onChange={e => handleChange('phoneNumber', e.target.value)}
+              disabled={readOnly || loading}
+              fullWidth
+              variant="outlined"
+              margin="dense"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth margin="dense" disabled={readOnly || loading}>
+              <InputLabel>Роли</InputLabel>
+              <Select
+                multiple
+                value={form.roles || []}
+                onChange={e => handleChange('roles', e.target.value)}
+                input={<OutlinedInput label="Роли" />}
+                renderValue={(selected) => (selected as string[]).join(', ')}
+                sx={{ minHeight: 56 }}
+              >
+                {ALL_ROLES.map((role: string) => (
+                  <MenuItem key={role} value={role}>{role}</MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>Можно выбрать несколько ролей</FormHelperText>
+            </FormControl>
+          </Grid>
+          {!readOnly && (
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Пароль"
+                type="password"
+                value={form.password || ''}
+                onChange={e => handleChange('password', e.target.value)}
+                fullWidth
+                autoComplete="new-password"
+                variant="outlined"
+                margin="dense"
+              />
+            </Grid>
+          )}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Клуб"
+              value={form.managedClubId || ''}
+              onChange={e => handleChange('managedClubId', e.target.value)}
+              disabled={readOnly || loading}
+              fullWidth
+              variant="outlined"
+              margin="dense"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Баланс"
+              type="number"
+              value={form.balance || 0}
+              onChange={e => handleChange('balance', e.target.value)}
+              disabled={readOnly || loading}
+              fullWidth
+              variant="outlined"
+              margin="dense"
+            />
+          </Grid>
         </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#2e7d32',
-            color: 'white',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {users.filter(u => u.isDeleted === false).length}
-                  </Typography>
-                  <Typography variant="body2">
-                    Активных
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <Typography variant="caption">
-                      {totalUsers ? ((users.filter(u => u.isDeleted === false).length / totalUsers) * 100).toFixed(0) : 0}% от общего числа
-                    </Typography>
-                  </Box>
-                </Box>
-                <ActiveIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#ed6c02',
-            color: 'white',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    0
-                  </Typography>
-                  <Typography variant="body2">
-                    Онлайн сейчас
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <Typography variant="caption">
-                      0% активности
-                    </Typography>
-                  </Box>
-                </Box>
-                <Security sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#d32f2f',
-            color: 'white',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {users.filter(u => u.isDeleted).length}
-                  </Typography>
-                  <Typography variant="body2">
-                    Заблокировано
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <Typography variant="caption">
-                      Требует внимания
-                    </Typography>
-                  </Box>
-                </Box>
-                <PersonOff sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={3}>
-        {/* Основная таблица */}
-        <Grid item xs={12} lg={8}>
-          {/* Панель управления */}
-          <Card sx={{ borderRadius: 2, mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', mr: 2 }}>
-                  🔍 Поиск и фильтры
-                </Typography>
-                
-                <TextField
-                  size="small"
-                  label="Поиск пользователей"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ minWidth: 200 }}
-                />
-                
-                <TextField
-                  select
-                  size="small"
-                  label="Роль"
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value)}
-                  sx={{ minWidth: 150 }}
-                >
-                  <MenuItem value="all">Все роли</MenuItem>
-                  <MenuItem value="SuperAdmin">Супер админ</MenuItem>
-                  <MenuItem value="Admin">Админ</MenuItem>
-                  <MenuItem value="Manager">Менеджер</MenuItem>
-                  <MenuItem value="User">Пользователь</MenuItem>
-                </TextField>
-
-                <Button
-                  variant="contained"
-                  startIcon={<AddPersonIcon />}
-                  sx={{ ml: 'auto' }}
-                  onClick={() => setAddUserOpen(true)}
-                >
-                  Добавить пользователя
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Таблица пользователей */}
-          <Card sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                👥 Список пользователей ({filteredUsers.length})
-              </Typography>
-              
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Пользователь</TableCell>
-                      <TableCell>Контакты</TableCell>
-                      <TableCell>Роли</TableCell>
-                      <TableCell>Статус</TableCell>
-                      <TableCell>Баланс</TableCell>
-                      <TableCell>Очки</TableCell>
-                      <TableCell>Дата регистрации</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar>{user.fullName ? user.fullName[0] : '?'}</Avatar>
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{user.fullName}</Typography>
-                              <Typography variant="caption" color="text.secondary">ID: {user.id}</Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">{user.email}</Typography><br />
-                          <Typography variant="caption">{user.phoneNumber}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={Array.isArray(user.roles) ? user.roles.map(r => typeof r === 'string' ? r : r.name).join(', ') : ''}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={user.isDeleted ? 'Заблокирован' : 'Активен'}
-                            color={user.isDeleted ? 'error' : 'success'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">₸{user.balance}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">{user.points}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : ''}</Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Правая панель */}
-        <Grid item xs={12} lg={4}>
-          {/* Распределение по ролям */}
-          <Card sx={{ borderRadius: 2, mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
-                🎭 Распределение по ролям
-              </Typography>
-
-              <List sx={{ p: 0 }}>
-                {[
-                  { name: 'Супер админ', key: 'SuperAdmin', color: '#d32f2f' },
-                  { name: 'Администратор', key: 'Admin', color: '#ed6c02' },
-                  { name: 'Менеджер', key: 'Manager', color: '#1976d2' },
-                  { name: 'Пользователь', key: 'User', color: '#2e7d32' },
-                ].map((role, index) => {
-                  const count = users.filter(u => Array.isArray(u.roles) && u.roles.some(r => (typeof r === 'string' ? r : r.name) === role.key)).length;
-                  return (
-                    <React.Fragment key={role.name}>
-                      <ListItem sx={{ px: 0, py: 1 }}>
-                        <ListItemAvatar sx={{ minWidth: 36 }}>
-                          <Box
-                            sx={{
-                              width: 12,
-                              height: 12,
-                              borderRadius: '50%',
-                              backgroundColor: role.color,
-                            }}
-                          />
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={role.name}
-                          secondary={`${count} пользователей (${users.length ? ((count / users.length) * 100).toFixed(0) : 0}%)`}
-                        />
-                      </ListItem>
-                      {index < 3 && <Divider />}
-                    </React.Fragment>
-                  );
-                })}
-              </List>
-            </CardContent>
-          </Card>
-
-          {/* Недавние регистрации */}
-          <Card sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                📅 Недавние регистрации
-              </Typography>
-              
-              <List sx={{ p: 0 }}>
-                {users
-                  .slice()
-                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                  .slice(0, 5)
-                  .map((user, index) => (
-                    <React.Fragment key={user.id}>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemAvatar>
-                          <Avatar>{user.fullName ? user.fullName[0] : '?'}</Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                {user.fullName}
-                              </Typography>
-                              <Chip
-                                label={Array.isArray(user.roles) ? user.roles.map(r => typeof r === 'string' ? r : r.name).join(', ') : ''}
-                                size="small"
-                                sx={{ fontSize: '10px', height: 20 }}
-                              />
-                            </Box>
-                          }
-                          secondary={
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <Typography variant="caption">
-                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : ''}
-                              </Typography>
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                      {index < 4 && <Divider />}
-                    </React.Fragment>
-                  ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Dialog open={addUserOpen} onClose={() => setAddUserOpen(false)}>
-        <DialogTitle>Добавить пользователя</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 340 }}>
-          <TextField label="ФИО" value={newUser.fullName} onChange={e => setNewUser({ ...newUser, fullName: e.target.value })} fullWidth />
-          <TextField label="Email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} fullWidth />
-          <TextField label="Телефон" value={newUser.phoneNumber} onChange={e => setNewUser({ ...newUser, phoneNumber: e.target.value })} fullWidth />
-          <TextField label="Пароль" type="password" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} fullWidth />
-          <TextField
-            select
-            label="Роль"
-            value={newUser.roles[0]}
-            onChange={e => setNewUser({ ...newUser, roles: [e.target.value as UserRoles] })}
-            fullWidth
-          >
-            <MenuItem value={UserRoles.USER}>Пользователь</MenuItem>
-            <MenuItem value={UserRoles.MANAGER}>Менеджер</MenuItem>
-            <MenuItem value={UserRoles.ADMIN}>Админ</MenuItem>
-            <MenuItem value={UserRoles.SUPER_ADMIN}>Супер админ</MenuItem>
-          </TextField>
-          {addUserError && <Alert severity="error">{addUserError}</Alert>}
-          {addUserSuccess && <Alert severity="success">{addUserSuccess}</Alert>}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddUserOpen(false)}>Отмена</Button>
-          <Button
-            variant="contained"
-            onClick={async () => {
-              setAddUserLoading(true);
-              setAddUserError('');
-              setAddUserSuccess('');
-              try {
-                await apiService.createUser({
-                  fullName: newUser.fullName,
-                  email: newUser.email,
-                  phoneNumber: newUser.phoneNumber,
-                  password: newUser.password,
-                  roles: newUser.roles,
-                });
-                setAddUserSuccess('Пользователь добавлен!');
-                setAddUserOpen(false);
-                setNewUser({ fullName: '', email: '', phoneNumber: '', password: '', roles: [UserRoles.USER] });
-                // обновить список
-                setLoading(true);
-                const data = await apiService.getUsers();
-                setUsers(data);
-              } catch (e: any) {
-                setAddUserError(e?.message || 'Ошибка при добавлении пользователя');
-              } finally {
-                setAddUserLoading(false);
-              }
-            }}
-            disabled={addUserLoading || !newUser.fullName || !newUser.email || !newUser.phoneNumber || !newUser.password}
-          >
-            Сохранить
+      </DialogContent>
+      <DialogActions sx={{ px: 4, pb: 3, pt: 2 }}>
+        <Button onClick={onClose} disabled={loading}>Закрыть</Button>
+        {!readOnly && (
+          <Button onClick={handleSave} variant="contained" disabled={loading}>
+            {loading ? 'Сохраняю...' : 'Сохранить'}
           </Button>
-        </DialogActions>
-      </Dialog>
-      <Snackbar open={!!addUserSuccess} autoHideDuration={3000} onClose={() => setAddUserSuccess('')}>
-        <Alert onClose={() => setAddUserSuccess('')} severity="success" sx={{ width: '100%' }}>
-          {addUserSuccess}
-        </Alert>
-      </Snackbar>
-    </Box>
+        )}
+      </DialogActions>
+    </Dialog>
   );
 };
 

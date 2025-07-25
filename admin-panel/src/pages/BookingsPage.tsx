@@ -24,6 +24,7 @@ import {
   ListItemText,
   ListItemAvatar,
   Divider,
+  Alert,
 } from '@mui/material';
 import {
   Event as EventIcon,
@@ -51,15 +52,19 @@ import { Booking, BookingStatus } from '../types';
 const BookingsPage: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterClub, setFilterClub] = useState('all');
 
   useEffect(() => {
     const fetchBookings = async () => {
       setLoading(true);
+      setError(null);
       try {
         const data = await apiService.getBookings(1, 100);
         setBookings(data.items || data); // поддержка пагинации и простого массива
+      } catch (err: any) {
+        setError(err.message || 'Ошибка загрузки бронирований');
       } finally {
         setLoading(false);
       }
@@ -129,6 +134,9 @@ const BookingsPage: React.FC = () => {
 
   if (loading) {
     return <Box p={3}><Typography>Загрузка...</Typography></Box>;
+  }
+  if (error) {
+    return <Box p={3}><Alert severity="error">{error}</Alert></Box>;
   }
 
   return (
