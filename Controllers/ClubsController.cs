@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using BookHub.Data;
 using BookHub.Models;
 using BookHub.Models.Dtos;
+using BookHub.Helpers;
 
 namespace BookHub.Controllers
 {
@@ -26,6 +27,7 @@ namespace BookHub.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ClubDto>>> GetClubs()
         {
+            // Все могут просматривать клубы
             var clubs = await _context.Clubs.ToListAsync();
             var dtos = clubs.Select(club => new ClubDto
             {
@@ -49,10 +51,9 @@ namespace BookHub.Controllers
         public async Task<ActionResult<ClubDto>> GetClub(int id)
         {
             var club = await _context.Clubs.FirstOrDefaultAsync(c => c.Id == id);
-
             if (club == null)
                 return NotFound();
-
+            // Все могут просматривать клубы
             var dto = new ClubDto
             {
                 Id = club.Id,
@@ -93,11 +94,17 @@ namespace BookHub.Controllers
         {
             if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-
             var club = await _context.Clubs.FindAsync(id);
             if (club == null)
                 return NotFound();
-
+            // Проверка разрешения на редактирование клуба
+            bool canEdit = AuthorizationHelper.HasPermission(User, "Клубы", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может редактировать только свой клуб
+            if (User.IsInRole("Manager") && club.Id != AuthorizationHelper.GetManagedClubId(User))
+                canEdit = false;
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования клуба");
             club.Name = dto.Name;
             club.City = dto.City;
             club.Address = dto.Address;
@@ -107,7 +114,6 @@ namespace BookHub.Controllers
             club.OpeningHours = dto.OpeningHours;
             club.IsActive = dto.IsActive;
             club.LogoUrl = dto.LogoUrl;
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -119,7 +125,6 @@ namespace BookHub.Controllers
                 else
                     throw;
             }
-
             return NoContent();
         }
 
@@ -127,6 +132,11 @@ namespace BookHub.Controllers
         [HttpPost]
         public async Task<ActionResult<ClubDto>> PostClub(ClubDto dto)
         {
+            // Проверка разрешения на создание клуба
+            bool canCreate = AuthorizationHelper.HasPermission(User, "Клубы", "Создание", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canCreate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для создания клуба");
             var club = new Club
             {
                 Name = dto.Name,
@@ -140,13 +150,10 @@ namespace BookHub.Controllers
                 IsActive = dto.IsActive,
                 LogoUrl = dto.LogoUrl
             };
-
             _context.Clubs.Add(club);
             await _context.SaveChangesAsync();
-
             dto.Id = club.Id;
             dto.IsActive = club.IsActive;
-
             return CreatedAtAction(nameof(GetClub), new { id = club.Id }, dto);
         }
 
@@ -157,10 +164,16 @@ namespace BookHub.Controllers
             var club = await _context.Clubs.FindAsync(id);
             if (club == null)
                 return NotFound();
-
+            // Проверка разрешения на удаление клуба
+            bool canDelete = AuthorizationHelper.HasPermission(User, "Клубы", "Удаление", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер не может удалять клубы
+            if (User.IsInRole("Manager"))
+                canDelete = false;
+            if (!canDelete)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для удаления клуба");
             _context.Clubs.Remove(club);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 

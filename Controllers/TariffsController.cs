@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using BookHub.Data;
 using BookHub.Models;
 using BookHub.Models.Dtos;
+using BookHub.Helpers;
 
 namespace BookHub.Controllers
 {
@@ -69,17 +70,22 @@ namespace BookHub.Controllers
         {
             if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-
             var tariff = await _context.Tariffs.FindAsync(id);
             if (tariff == null)
                 return NotFound();
-
+            // Проверка разрешения на редактирование тарифа
+            bool canEdit = AuthorizationHelper.HasPermission(User, "Тарифы", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может редактировать только тарифы своего клуба
+            if (User.IsInRole("Manager") && tariff.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canEdit = false;
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования тарифа");
             tariff.ClubId = dto.ClubId;
             tariff.Name = dto.Name;
             tariff.Description = dto.Description;
             tariff.PricePerHour = dto.PricePerHour;
             tariff.IsNightTariff = dto.IsNightTariff;
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -91,7 +97,6 @@ namespace BookHub.Controllers
                 else
                     throw;
             }
-
             return NoContent();
         }
 
@@ -99,6 +104,14 @@ namespace BookHub.Controllers
         [HttpPost]
         public async Task<ActionResult<TariffDto>> PostTariff(TariffDto dto)
         {
+            // Проверка разрешения на создание тарифа
+            bool canCreate = AuthorizationHelper.HasPermission(User, "Тарифы", "Создание", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может создавать тарифы только для своего клуба
+            if (User.IsInRole("Manager") && dto.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canCreate = false;
+            if (!canCreate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для создания тарифа");
             var tariff = new Tariff
             {
                 ClubId = dto.ClubId,
@@ -107,12 +120,9 @@ namespace BookHub.Controllers
                 PricePerHour = dto.PricePerHour,
                 IsNightTariff = dto.IsNightTariff
             };
-
             _context.Tariffs.Add(tariff);
             await _context.SaveChangesAsync();
-
             dto.Id = tariff.Id;
-
             return CreatedAtAction(nameof(GetTariff), new { id = tariff.Id }, dto);
         }
 
@@ -123,10 +133,16 @@ namespace BookHub.Controllers
             var tariff = await _context.Tariffs.FindAsync(id);
             if (tariff == null)
                 return NotFound();
-
+            // Проверка разрешения на удаление тарифа
+            bool canDelete = AuthorizationHelper.HasPermission(User, "Тарифы", "Удаление", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может удалять только тарифы своего клуба
+            if (User.IsInRole("Manager") && tariff.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canDelete = false;
+            if (!canDelete)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для удаления тарифа");
             _context.Tariffs.Remove(tariff);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 

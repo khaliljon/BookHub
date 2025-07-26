@@ -16,8 +16,11 @@ export interface User {
 export interface Role {
   id: number;
   name: string;
-  description: string;
+  description?: string;
   isActive: boolean;
+  createdAt?: string;
+  userCount?: number;
+  permissions?: Record<string, Record<string, boolean>>;
 }
 
 export interface UserRole {

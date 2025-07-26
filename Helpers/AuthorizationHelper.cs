@@ -1,10 +1,27 @@
 using System.Security.Claims;
+using BookHub.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookHub.Helpers
 {
     public static class AuthorizationHelper
     {
+        /// <summary>
+        /// Проверяет, есть ли у пользователя разрешение на действие по матрице прав роли
+        /// </summary>
+        public static bool HasPermission(ClaimsPrincipal user, string permissionGroup, string permissionAction, Func<int, Role?> getRoleByUserId)
+        {
+            int userId = GetCurrentUserId(user);
+            var role = getRoleByUserId(userId);
+            if (role == null || role.Permissions == null)
+                return false;
+            if (!role.Permissions.ContainsKey(permissionGroup))
+                return false;
+            var group = role.Permissions[permissionGroup];
+            if (!group.ContainsKey(permissionAction))
+                return false;
+            return group[permissionAction];
+        }
         /// <summary>
         /// Получает ID текущего пользователя из JWT токена
         /// </summary>
@@ -128,4 +145,4 @@ namespace BookHub.Helpers
             return new ForbidResult(message);
         }
     }
-}
+    }

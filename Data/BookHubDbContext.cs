@@ -26,7 +26,6 @@ namespace BookHub.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Удалён ValueConverter для Hall.PhotoUrls — EF Core с Npgsql поддерживает text[] напрямую
             // Настройка связи многие-ко-многим для User-Role
             modelBuilder.Entity<UserRole>()
                 .HasKey(ur => new { ur.UserId, ur.RoleId });
@@ -41,18 +40,52 @@ namespace BookHub.Data
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId);
 
-            // Настройка связи многие-ко-многим через UserRole
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Roles)
                 .WithMany(r => r.Users)
                 .UsingEntity<UserRole>();
 
-            // Заполнение базовых ролей
+            // Фиксированные дата и permissions для HasData
+            var fixedDate = new DateTime(2025, 07, 26, 18, 00, 00, DateTimeKind.Utc);
+            var emptyPermissions = JsonSerializer.Serialize(new Dictionary<string, Dictionary<string, bool>>());
+
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = "SuperAdmin", Description = "Суперадминистратор - полный доступ ко всем функциям системы", IsActive = true },
-                new Role { Id = 2, Name = "Admin", Description = "Администратор - управление клубами, залами, местами, тарифами", IsActive = true },
-                new Role { Id = 3, Name = "Manager", Description = "Менеджер клуба - управление бронированиями по своему клубу", IsActive = true },
-                new Role { Id = 4, Name = "User", Description = "Обычный пользователь - бронирование мест", IsActive = true }
+                new Role
+                {
+                    Id = 1,
+                    Name = "SuperAdmin",
+                    Description = "Суперадминистратор - полный доступ ко всем функциям системы",
+                    IsActive = true,
+                    CreatedAt = fixedDate,
+                    PermissionMatrixJson = emptyPermissions
+                },
+                new Role
+                {
+                    Id = 2,
+                    Name = "Admin",
+                    Description = "Администратор - управление клубами, залами, местами, тарифами",
+                    IsActive = true,
+                    CreatedAt = fixedDate,
+                    PermissionMatrixJson = emptyPermissions
+                },
+                new Role
+                {
+                    Id = 3,
+                    Name = "Manager",
+                    Description = "Менеджер клуба - управление бронированиями по своему клубу",
+                    IsActive = true,
+                    CreatedAt = fixedDate,
+                    PermissionMatrixJson = emptyPermissions
+                },
+                new Role
+                {
+                    Id = 4,
+                    Name = "User",
+                    Description = "Обычный пользователь - бронирование мест",
+                    IsActive = true,
+                    CreatedAt = fixedDate,
+                    PermissionMatrixJson = emptyPermissions
+                }
             );
 
             base.OnModelCreating(modelBuilder);

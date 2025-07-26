@@ -29,16 +29,77 @@ namespace BookHub.Controllers
         {
             var roles = await _context.Roles
                 .Where(r => r.IsActive)
-                .Select(r => new RoleDto
-                {
-                    Id = r.Id,
-                    Name = r.Name,
-                    Description = r.Description,
-                    IsActive = r.IsActive
-                })
+                .Include(r => r.UserRoles)
                 .ToListAsync();
 
-            return Ok(roles);
+            var result = roles.Select(r => new RoleDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Description = r.Description,
+                IsActive = r.IsActive,
+                Permissions = GetPermissionsForRole(r),
+                UserCount = r.UserRoles?.Count ?? 0,
+                CreatedAt = r.CreatedAt > DateTime.MinValue ? r.CreatedAt.ToUniversalTime().ToString("o") : null
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        private Dictionary<string, Dictionary<string, bool>> GetPermissionsForRole(Role role)
+        {
+            // Сначала проверяем сохраненные права в БД
+            if (!string.IsNullOrEmpty(role.PermissionMatrixJson))
+            {
+                try
+                {
+                    var savedPermissions = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, bool>>>(role.PermissionMatrixJson);
+                    if (savedPermissions != null)
+                        return savedPermissions;
+                }
+                catch
+                {
+                    // Если десериализация не удалась, используем дефолтные права
+                }
+            }
+
+            // Если сохраненных прав нет, используем дефолтные
+            var allActions = new Dictionary<string, bool> { { "create", true }, { "read", true }, { "update", true }, { "delete", true } };
+            var adminActions = new Dictionary<string, bool> { { "create", true }, { "read", true }, { "update", true }, { "delete", false } };
+            var managerActions = new Dictionary<string, bool> { { "create", true }, { "read", true }, { "update", true }, { "delete", false } };
+            var userActions = new Dictionary<string, bool> { { "create", false }, { "read", true }, { "update", true }, { "delete", false } };
+
+            var keys = new[] { "users", "clubs", "bookings", "payments", "roles", "notifications", "reports", "settings" };
+            var matrix = new Dictionary<string, Dictionary<string, bool>>();
+
+            foreach (var key in keys)
+            {
+                matrix[key] = role.Name switch
+                {
+                    "SuperAdmin" => new Dictionary<string, bool>(allActions),
+                    "Admin" => new Dictionary<string, bool>(adminActions),
+                    "Manager" => new Dictionary<string, bool>(managerActions),
+                    "User" => new Dictionary<string, bool>(userActions),
+                    _ => new Dictionary<string, bool>()
+                };
+            }
+
+            return matrix;
+        }
+
+        [HttpPut("{id}/permissions")]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> UpdatePermissions(int id, [FromBody] Dictionary<string, Dictionary<string, bool>> updatedPermissions)
+        {
+            var role = await _context.Roles.FindAsync(id);
+            if (role == null)
+                return NotFound();
+
+            // Для простоты — сохраняем как сериализованную строку
+            role.PermissionMatrixJson = System.Text.Json.JsonSerializer.Serialize(updatedPermissions);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
         [HttpPost]
@@ -49,21 +110,20 @@ namespace BookHub.Controllers
             {
                 Name = createRoleDto.Name,
                 Description = createRoleDto.Description,
-                IsActive = createRoleDto.IsActive
+                IsActive = createRoleDto.IsActive,
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.Roles.Add(role);
             await _context.SaveChangesAsync();
 
-            var roleDto = new RoleDto
+            return CreatedAtAction(nameof(GetRole), new { id = role.Id }, new RoleDto
             {
                 Id = role.Id,
                 Name = role.Name,
                 Description = role.Description,
                 IsActive = role.IsActive
-            };
-
-            return CreatedAtAction(nameof(GetRole), new { id = role.Id }, roleDto);
+            });
         }
 
         [HttpGet("{id}")]
@@ -73,65 +133,51 @@ namespace BookHub.Controllers
             var role = await _context.Roles.FindAsync(id);
 
             if (role == null)
-            {
                 return NotFound();
-            }
 
-            var roleDto = new RoleDto
+            return Ok(new RoleDto
             {
                 Id = role.Id,
                 Name = role.Name,
                 Description = role.Description,
                 IsActive = role.IsActive
-            };
-
-            return Ok(roleDto);
+            });
         }
 
         [HttpPost("assign")]
         [RoleAuthorization("Admin")]
-        public async Task<IActionResult> AssignRole(AssignRoleDto assignRoleDto)
+        public async Task<IActionResult> AssignRole(AssignRoleDto dto)
         {
-            var user = await _context.Users.FindAsync(assignRoleDto.UserId);
-            var role = await _context.Roles.FindAsync(assignRoleDto.RoleId);
+            var user = await _context.Users.FindAsync(dto.UserId);
+            var role = await _context.Roles.FindAsync(dto.RoleId);
 
             if (user == null || role == null)
-            {
                 return NotFound();
-            }
 
-            var existingUserRole = await _context.UserRoles
-                .FirstOrDefaultAsync(ur => ur.UserId == assignRoleDto.UserId && ur.RoleId == assignRoleDto.RoleId);
-
-            if (existingUserRole != null)
-            {
+            var exists = await _context.UserRoles.AnyAsync(ur => ur.UserId == dto.UserId && ur.RoleId == dto.RoleId);
+            if (exists)
                 return BadRequest("Пользователь уже имеет эту роль");
-            }
 
-            var userRole = new UserRole
+            _context.UserRoles.Add(new UserRole
             {
-                UserId = assignRoleDto.UserId,
-                RoleId = assignRoleDto.RoleId,
+                UserId = dto.UserId,
+                RoleId = dto.RoleId,
                 AssignedAt = DateTime.UtcNow
-            };
+            });
 
-            _context.UserRoles.Add(userRole);
             await _context.SaveChangesAsync();
-
             return Ok();
         }
 
         [HttpDelete("revoke")]
         [RoleAuthorization("Admin")]
-        public async Task<IActionResult> RevokeRole(AssignRoleDto assignRoleDto)
+        public async Task<IActionResult> RevokeRole(AssignRoleDto dto)
         {
             var userRole = await _context.UserRoles
-                .FirstOrDefaultAsync(ur => ur.UserId == assignRoleDto.UserId && ur.RoleId == assignRoleDto.RoleId);
+                .FirstOrDefaultAsync(ur => ur.UserId == dto.UserId && ur.RoleId == dto.RoleId);
 
             if (userRole == null)
-            {
                 return NotFound();
-            }
 
             _context.UserRoles.Remove(userRole);
             await _context.SaveChangesAsync();

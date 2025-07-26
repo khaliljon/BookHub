@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using BookHub.Data;
 using BookHub.Models;
 using BookHub.Models.Dtos;
+using BookHub.Helpers;
 
 namespace BookHub.Controllers
 {
@@ -27,8 +28,12 @@ namespace BookHub.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AuditLogDto>>> GetAuditLogs()
         {
+            // Проверка разрешения на просмотр аудит-логов
+            bool canRead = AuthorizationHelper.HasPermission(User, "АудитЛоги", "Чтение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canRead)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра аудит-логов");
             var logs = await _context.AuditLogs.ToListAsync();
-
             var dtos = logs.Select(log => new AuditLogDto
             {
                 Id = log.Id,
@@ -38,7 +43,6 @@ namespace BookHub.Controllers
                 RecordId = log.RecordId,
                 CreatedAt = log.CreatedAt
             }).ToList();
-
             return dtos;
         }
 
@@ -46,11 +50,14 @@ namespace BookHub.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<AuditLogDto>> GetAuditLog(int id)
         {
+            // Проверка разрешения на просмотр аудит-лога
+            bool canRead = AuthorizationHelper.HasPermission(User, "АудитЛоги", "Чтение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canRead)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра аудит-лога");
             var log = await _context.AuditLogs.FindAsync(id);
-
             if (log == null)
                 return NotFound();
-
             var dto = new AuditLogDto
             {
                 Id = log.Id,
@@ -60,7 +67,6 @@ namespace BookHub.Controllers
                 RecordId = log.RecordId,
                 CreatedAt = log.CreatedAt
             };
-
             return dto;
         }
 
@@ -70,17 +76,19 @@ namespace BookHub.Controllers
         {
             if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-
             var log = await _context.AuditLogs.FindAsync(id);
             if (log == null)
                 return NotFound();
-
+            // Проверка разрешения на редактирование аудит-лога
+            bool canEdit = AuthorizationHelper.HasPermission(User, "АудитЛоги", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования аудит-лога");
             log.UserId = dto.UserId;
             log.Action = dto.Action;
             log.TableName = dto.TableName;
             log.RecordId = dto.RecordId;
             log.CreatedAt = dto.CreatedAt;
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -92,7 +100,6 @@ namespace BookHub.Controllers
                 else
                     throw;
             }
-
             return NoContent();
         }
 
@@ -100,6 +107,11 @@ namespace BookHub.Controllers
         [HttpPost]
         public async Task<ActionResult<AuditLogDto>> PostAuditLog(AuditLogDto dto)
         {
+            // Проверка разрешения на создание аудит-лога
+            bool canCreate = AuthorizationHelper.HasPermission(User, "АудитЛоги", "Создание", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canCreate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для создания аудит-лога");
             var log = new AuditLog
             {
                 UserId = dto.UserId,
@@ -108,12 +120,9 @@ namespace BookHub.Controllers
                 RecordId = dto.RecordId,
                 CreatedAt = dto.CreatedAt
             };
-
             _context.AuditLogs.Add(log);
             await _context.SaveChangesAsync();
-
             dto.Id = log.Id;
-
             return CreatedAtAction(nameof(GetAuditLog), new { id = log.Id }, dto);
         }
 
@@ -124,10 +133,13 @@ namespace BookHub.Controllers
             var log = await _context.AuditLogs.FindAsync(id);
             if (log == null)
                 return NotFound();
-
+            // Проверка разрешения на удаление аудит-лога
+            bool canDelete = AuthorizationHelper.HasPermission(User, "АудитЛоги", "Удаление", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canDelete)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для удаления аудит-лога");
             _context.AuditLogs.Remove(log);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 

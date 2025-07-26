@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using BookHub.Data;
 using BookHub.Models;
 using BookHub.Models.Dtos;
+using BookHub.Helpers;
 
 namespace BookHub.Controllers
 {
@@ -73,11 +74,19 @@ namespace BookHub.Controllers
         {
             if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-
             var spec = await _context.ComputerSpecs.FindAsync(id);
             if (spec == null)
                 return NotFound();
-
+            // Проверка разрешения на редактирование характеристики
+            bool canEdit = AuthorizationHelper.HasPermission(User, "Компьютеры", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может редактировать только характеристики своего клуба
+            var seat = await _context.Seats.FindAsync(spec.SeatId);
+            var hall = seat != null ? await _context.Halls.FindAsync(seat.HallId) : null;
+            if (User.IsInRole("Manager") && hall?.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canEdit = false;
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования компьютера");
             spec.SeatId = dto.SeatId;
             spec.CPU = dto.CPU;
             spec.GPU = dto.GPU;
@@ -85,7 +94,6 @@ namespace BookHub.Controllers
             spec.Monitor = dto.Monitor;
             spec.Peripherals = dto.Peripherals;
             spec.UpdatedAt = dto.UpdatedAt;
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -97,7 +105,6 @@ namespace BookHub.Controllers
                 else
                     throw;
             }
-
             return NoContent();
         }
 
@@ -105,6 +112,16 @@ namespace BookHub.Controllers
         [HttpPost]
         public async Task<ActionResult<ComputerSpecDto>> PostComputerSpec(ComputerSpecDto dto)
         {
+            // Проверка разрешения на создание характеристики
+            bool canCreate = AuthorizationHelper.HasPermission(User, "Компьютеры", "Создание", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может создавать характеристики только для своего клуба
+            var seat = await _context.Seats.FindAsync(dto.SeatId);
+            var hall = seat != null ? await _context.Halls.FindAsync(seat.HallId) : null;
+            if (User.IsInRole("Manager") && hall?.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canCreate = false;
+            if (!canCreate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для создания компьютера");
             var spec = new ComputerSpec
             {
                 SeatId = dto.SeatId,
@@ -115,12 +132,9 @@ namespace BookHub.Controllers
                 Peripherals = dto.Peripherals,
                 UpdatedAt = dto.UpdatedAt
             };
-
             _context.ComputerSpecs.Add(spec);
             await _context.SaveChangesAsync();
-
             dto.Id = spec.Id;
-
             return CreatedAtAction(nameof(GetComputerSpec), new { id = spec.Id }, dto);
         }
 
@@ -131,10 +145,17 @@ namespace BookHub.Controllers
             var spec = await _context.ComputerSpecs.FindAsync(id);
             if (spec == null)
                 return NotFound();
-
+            // Проверка разрешения на удаление характеристики
+            bool canDelete = AuthorizationHelper.HasPermission(User, "Компьютеры", "Удаление", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            var seat = await _context.Seats.FindAsync(spec.SeatId);
+            var hall = seat != null ? await _context.Halls.FindAsync(seat.HallId) : null;
+            if (User.IsInRole("Manager") && hall?.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canDelete = false;
+            if (!canDelete)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для удаления компьютера");
             _context.ComputerSpecs.Remove(spec);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 

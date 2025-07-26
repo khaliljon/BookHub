@@ -9,6 +9,7 @@ using System.Security.Claims;
 using BookHub.Data;
 using BookHub.Models;
 using BookHub.Models.Dtos;
+using BookHub.Helpers;
 
 namespace BookHub.Controllers
 {
@@ -48,7 +49,6 @@ namespace BookHub.Controllers
                 return Unauthorized("Не найден id пользователя или email в клеймах.");
             }
             var isAdminOrManager = User.IsInRole("Admin") || User.IsInRole("Manager") || User.IsInRole("SuperAdmin");
-
             IQueryable<Booking> query = _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Seat)
@@ -56,11 +56,16 @@ namespace BookHub.Controllers
                         .ThenInclude(h => h.Club)
                 .Include(b => b.Tariff)
                 .Include(b => b.Payments);
-
             // Обычные пользователи видят только свои бронирования
             if (!isAdminOrManager)
             {
                 query = query.Where(b => b.UserId == currentUserId);
+            }
+            // Менеджер видит только бронирования своего клуба
+            if (User.IsInRole("Manager"))
+            {
+                int? managedClubId = AuthorizationHelper.GetManagedClubId(User);
+                query = query.Where(b => b.Seat.Hall.ClubId == managedClubId);
             }
 
             var bookings = await query.ToListAsync();
@@ -167,10 +172,28 @@ namespace BookHub.Controllers
         public async Task<ActionResult<BookingDto>> GetBooking(int id)
         {
             var b = await _context.Bookings.FindAsync(id);
-
             if (b == null)
                 return NotFound();
-
+            // Проверка разрешения на просмотр бронирования
+            bool canView = AuthorizationHelper.HasPermission(User, "Бронирования", "Просмотр", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может просматривать только бронирования своего клуба
+            if (User.IsInRole("Manager"))
+            {
+                int? managedClubId = AuthorizationHelper.GetManagedClubId(User);
+                if (b.SeatId != 0)
+                {
+                    var seat = await _context.Seats.FindAsync(b.SeatId);
+                    var hall = seat != null ? await _context.Halls.FindAsync(seat.HallId) : null;
+                    if (hall?.ClubId != managedClubId)
+                        canView = false;
+                }
+            }
+            // User может просматривать только свои бронирования
+            if (User.IsInRole("User") && b.UserId != AuthorizationHelper.GetCurrentUserId(User))
+                canView = false;
+            if (!canView)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра бронирования");
             var dto = new BookingDto
             {
                 Id = b.Id,
@@ -183,7 +206,6 @@ namespace BookHub.Controllers
                 TotalPrice = b.TotalPrice,
                 Status = b.Status
             };
-
             return dto;
         }
 
@@ -193,15 +215,28 @@ namespace BookHub.Controllers
         {
             if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-
             if (dto.TimeEnd <= dto.TimeStart)
                 return BadRequest("Время окончания должно быть больше времени начала.");
-
             var booking = await _context.Bookings.FindAsync(id);
-
             if (booking == null)
                 return NotFound();
-
+            // Проверка разрешения на редактирование бронирования
+            bool canEdit = AuthorizationHelper.HasPermission(User, "Бронирования", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может редактировать только бронирования своего клуба
+            if (User.IsInRole("Manager"))
+            {
+                int? managedClubId = AuthorizationHelper.GetManagedClubId(User);
+                var seat = await _context.Seats.FindAsync(booking.SeatId);
+                var hall = seat != null ? await _context.Halls.FindAsync(seat.HallId) : null;
+                if (hall?.ClubId != managedClubId)
+                    canEdit = false;
+            }
+            // User может редактировать только свои бронирования
+            if (User.IsInRole("User") && booking.UserId != AuthorizationHelper.GetCurrentUserId(User))
+                canEdit = false;
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования бронирования");
             booking.UserId = dto.UserId;
             booking.SeatId = dto.SeatId;
             booking.TariffId = dto.TariffId;
@@ -210,7 +245,6 @@ namespace BookHub.Controllers
             booking.TimeEnd = dto.TimeEnd;
             booking.TotalPrice = dto.TotalPrice;
             booking.Status = dto.Status;
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -222,7 +256,6 @@ namespace BookHub.Controllers
                 else
                     throw;
             }
-
             return NoContent();
         }
 
@@ -232,7 +265,23 @@ namespace BookHub.Controllers
         {
             if (dto.TimeEnd <= dto.TimeStart)
                 return BadRequest("Время окончания должно быть больше времени начала.");
-
+            // Проверка разрешения на создание бронирования
+            bool canCreate = AuthorizationHelper.HasPermission(User, "Бронирования", "Создание", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может создавать бронирования только для своего клуба
+            if (User.IsInRole("Manager"))
+            {
+                int? managedClubId = AuthorizationHelper.GetManagedClubId(User);
+                var seat = await _context.Seats.FindAsync(dto.SeatId);
+                var hall = seat != null ? await _context.Halls.FindAsync(seat.HallId) : null;
+                if (hall?.ClubId != managedClubId)
+                    canCreate = false;
+            }
+            // User может создавать только свои бронирования
+            if (User.IsInRole("User") && dto.UserId != AuthorizationHelper.GetCurrentUserId(User))
+                canCreate = false;
+            if (!canCreate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для создания бронирования");
             var booking = new Booking
             {
                 UserId = dto.UserId,
@@ -245,12 +294,9 @@ namespace BookHub.Controllers
                 Status = dto.Status,
                 CreatedAt = DateTime.UtcNow
             };
-
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
-
             dto.Id = booking.Id;
-
             return CreatedAtAction(nameof(GetBooking), new { id = booking.Id }, dto);
         }
 
@@ -261,10 +307,25 @@ namespace BookHub.Controllers
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)
                 return NotFound();
-
+            // Проверка разрешения на удаление бронирования
+            bool canDelete = AuthorizationHelper.HasPermission(User, "Бронирования", "Удаление", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может удалять только бронирования своего клуба
+            if (User.IsInRole("Manager"))
+            {
+                int? managedClubId = AuthorizationHelper.GetManagedClubId(User);
+                var seat = await _context.Seats.FindAsync(booking.SeatId);
+                var hall = seat != null ? await _context.Halls.FindAsync(seat.HallId) : null;
+                if (hall?.ClubId != managedClubId)
+                    canDelete = false;
+            }
+            // User может удалять только свои бронирования
+            if (User.IsInRole("User") && booking.UserId != AuthorizationHelper.GetCurrentUserId(User))
+                canDelete = false;
+            if (!canDelete)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для удаления бронирования");
             _context.Bookings.Remove(booking);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 

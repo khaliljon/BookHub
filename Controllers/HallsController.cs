@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using BookHub.Data;
 using BookHub.Models;
 using BookHub.Models.Dtos;
+using BookHub.Helpers;
 
 namespace BookHub.Controllers
 {
@@ -70,17 +71,22 @@ namespace BookHub.Controllers
         {
             if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-
             var hall = await _context.Halls.FindAsync(id);
             if (hall == null)
                 return NotFound();
-
+            // Проверка разрешения на редактирование зала
+            bool canEdit = AuthorizationHelper.HasPermission(User, "Залы", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может редактировать только залы своего клуба
+            if (User.IsInRole("Manager") && hall.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canEdit = false;
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования зала");
             hall.ClubId = dto.ClubId;
             hall.Name = dto.Name;
             hall.Description = dto.Description;
             hall.IsDeleted = dto.IsDeleted;
             hall.PhotoUrls = dto.PhotoUrls;
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -92,7 +98,6 @@ namespace BookHub.Controllers
                 else
                     throw;
             }
-
             return NoContent();
         }
 
@@ -100,6 +105,14 @@ namespace BookHub.Controllers
         [HttpPost]
         public async Task<ActionResult<HallDto>> PostHall(HallDto dto)
         {
+            // Проверка разрешения на создание зала
+            bool canCreate = AuthorizationHelper.HasPermission(User, "Залы", "Создание", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может создавать залы только для своего клуба
+            if (User.IsInRole("Manager") && dto.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canCreate = false;
+            if (!canCreate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для создания зала");
             var hall = new Hall
             {
                 ClubId = dto.ClubId,
@@ -108,12 +121,9 @@ namespace BookHub.Controllers
                 IsDeleted = dto.IsDeleted,
                 PhotoUrls = dto.PhotoUrls
             };
-
             _context.Halls.Add(hall);
             await _context.SaveChangesAsync();
-
             dto.Id = hall.Id;
-
             return CreatedAtAction(nameof(GetHall), new { id = hall.Id }, dto);
         }
 
@@ -124,10 +134,16 @@ namespace BookHub.Controllers
             var hall = await _context.Halls.FindAsync(id);
             if (hall == null)
                 return NotFound();
-
+            // Проверка разрешения на удаление зала
+            bool canDelete = AuthorizationHelper.HasPermission(User, "Залы", "Удаление", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер не может удалять залы чужого клуба
+            if (User.IsInRole("Manager") && hall.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canDelete = false;
+            if (!canDelete)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для удаления зала");
             _context.Halls.Remove(hall);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 

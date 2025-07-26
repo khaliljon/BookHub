@@ -80,6 +80,35 @@ namespace BookHub.Controllers
             return dto;
         }
 
+        // PATCH: api/Users/5 (пример ограничения по матрице разрешений)
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UserDto updateDto)
+        {
+            // Получаем роль пользователя
+            Role? userRole = await _context.UserRoles
+                .Where(ur => ur.UserId == id)
+                .Select(ur => ur.Role)
+                .FirstOrDefaultAsync();
+
+            // Проверяем разрешение на редактирование пользователя
+            bool canEdit = AuthorizationHelper.HasPermission(User, "Пользователи", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования пользователя");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
+            if (user == null)
+                return NotFound("Пользователь не найден или удален");
+
+            // ...логика обновления пользователя...
+            user.FullName = updateDto.FullName;
+            user.PhoneNumber = updateDto.PhoneNumber;
+            user.Email = updateDto.Email;
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
         // PUT: api/Users/5 (свой профиль или SuperAdmin/Admin)
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, UserDto dto)

@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookHubApi.Migrations
 {
     [DbContext(typeof(BookHubDbContext))]
-    [Migration("20250724121919_AddLogoUrlToClubs")]
-    partial class AddLogoUrlToClubs
+    [Migration("20250726181028_AddPermissionsJsonColumn")]
+    partial class AddPermissionsJsonColumn
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -159,7 +159,6 @@ namespace BookHubApi.Migrations
                         .HasColumnName("is_deleted");
 
                     b.Property<string>("LogoUrl")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("logo_url");
 
@@ -295,8 +294,8 @@ namespace BookHubApi.Migrations
                         .HasColumnName("name");
 
                     b.PrimitiveCollection<List<string>>("PhotoUrls")
-                        .IsRequired()
-                        .HasColumnType("text[]");
+                        .HasColumnType("text[]")
+                        .HasColumnName("photo_urls");
 
                     b.HasKey("Id");
 
@@ -390,6 +389,10 @@ namespace BookHubApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
                     b.Property<string>("Description")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -405,6 +408,10 @@ namespace BookHubApi.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("name");
 
+                    b.Property<string>("PermissionMatrixJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("permissions_json");
+
                     b.HasKey("Id");
 
                     b.ToTable("roles");
@@ -413,30 +420,38 @@ namespace BookHubApi.Migrations
                         new
                         {
                             Id = 1,
+                            CreatedAt = new DateTime(2025, 7, 26, 18, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Суперадминистратор - полный доступ ко всем функциям системы",
                             IsActive = true,
-                            Name = "SuperAdmin"
+                            Name = "SuperAdmin",
+                            PermissionMatrixJson = "{}"
                         },
                         new
                         {
                             Id = 2,
+                            CreatedAt = new DateTime(2025, 7, 26, 18, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Администратор - управление клубами, залами, местами, тарифами",
                             IsActive = true,
-                            Name = "Admin"
+                            Name = "Admin",
+                            PermissionMatrixJson = "{}"
                         },
                         new
                         {
                             Id = 3,
+                            CreatedAt = new DateTime(2025, 7, 26, 18, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Менеджер клуба - управление бронированиями по своему клубу",
                             IsActive = true,
-                            Name = "Manager"
+                            Name = "Manager",
+                            PermissionMatrixJson = "{}"
                         },
                         new
                         {
                             Id = 4,
+                            CreatedAt = new DateTime(2025, 7, 26, 18, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Обычный пользователь - бронирование мест",
                             IsActive = true,
-                            Name = "User"
+                            Name = "User",
+                            PermissionMatrixJson = "{}"
                         });
                 });
 

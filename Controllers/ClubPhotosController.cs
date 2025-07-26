@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using BookHub.Data;
 using BookHub.Models;
 using BookHub.Models.Dtos;
+using BookHub.Helpers;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using System;
@@ -71,16 +72,21 @@ namespace BookHub.Controllers
         {
             if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-
             var photo = await _context.ClubPhotos.FindAsync(id);
             if (photo == null)
                 return NotFound();
-
+            // Проверка разрешения на редактирование фото клуба
+            bool canEdit = AuthorizationHelper.HasPermission(User, "ФотоКлуба", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может редактировать только фото своего клуба
+            if (User.IsInRole("Manager") && photo.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canEdit = false;
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования фото клуба");
             photo.ClubId = dto.ClubId;
             photo.PhotoUrl = dto.PhotoUrl;
             photo.Description = dto.Description;
             photo.UploadedAt = dto.UploadedAt;
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -92,7 +98,6 @@ namespace BookHub.Controllers
                 else
                     throw;
             }
-
             return NoContent();
         }
 
@@ -100,6 +105,14 @@ namespace BookHub.Controllers
         [HttpPost]
         public async Task<ActionResult<ClubPhotoDto>> PostClubPhoto(ClubPhotoDto dto)
         {
+            // Проверка разрешения на создание фото клуба
+            bool canCreate = AuthorizationHelper.HasPermission(User, "ФотоКлуба", "Создание", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может создавать фото только для своего клуба
+            if (User.IsInRole("Manager") && dto.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canCreate = false;
+            if (!canCreate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для создания фото клуба");
             var photo = new ClubPhoto
             {
                 ClubId = dto.ClubId,
@@ -107,18 +120,15 @@ namespace BookHub.Controllers
                 Description = dto.Description,
                 UploadedAt = dto.UploadedAt
             };
-
             _context.ClubPhotos.Add(photo);
             await _context.SaveChangesAsync();
-
             dto.Id = photo.Id;
-
             return CreatedAtAction(nameof(GetClubPhoto), new { id = photo.Id }, dto);
         }
 
         public class ClubPhotoUploadDto
         {
-            public IFormFile File { get; set; }
+        public IFormFile? File { get; set; }
         }
 
         // POST: api/ClubPhotos/upload
@@ -151,10 +161,16 @@ namespace BookHub.Controllers
             var photo = await _context.ClubPhotos.FindAsync(id);
             if (photo == null)
                 return NotFound();
-
+            // Проверка разрешения на удаление фото клуба
+            bool canDelete = AuthorizationHelper.HasPermission(User, "ФотоКлуба", "Удаление", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может удалять только фото своего клуба
+            if (User.IsInRole("Manager") && photo.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canDelete = false;
+            if (!canDelete)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для удаления фото клуба");
             _context.ClubPhotos.Remove(photo);
             await _context.SaveChangesAsync();
-
             // Удалить файл с диска, если он находится в /uploads/clubs/
             if (!string.IsNullOrEmpty(photo.PhotoUrl) && photo.PhotoUrl.StartsWith("/uploads/clubs/"))
             {
@@ -177,7 +193,6 @@ namespace BookHub.Controllers
                     System.IO.File.AppendAllText("delete_log.txt", $"Ошибка при удалении файла: {ex.Message}\n");
                 }
             }
-
             return NoContent();
         }
 

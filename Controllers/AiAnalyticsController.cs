@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BookHub.Data;
+using BookHub.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using Npgsql;
@@ -30,13 +31,17 @@ namespace BookHub.Controllers
         [HttpGet("customer-segmentation")]
         public async Task<IActionResult> GetCustomerSegmentation()
         {
+            // Проверка разрешения на просмотр AI-сегментации клиентов
+            bool canRead = AuthorizationHelper.HasPermission(User, "AIАналитика", "Чтение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canRead)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра AI-сегментации клиентов");
             try
             {
                 var results = await _context.Database
                     .SqlQueryRaw<CustomerSegmentationResult>(
                         "SELECT * FROM ai_customer_segmentation()")
                     .ToListAsync();
-
                 return Ok(new
                 {
                     success = true,
@@ -67,6 +72,11 @@ namespace BookHub.Controllers
             [FromQuery] int? clubId = null,
             [FromQuery] int days = 30)
         {
+            // Проверка разрешения на просмотр AI-прогноза выручки
+            bool canRead = AuthorizationHelper.HasPermission(User, "AIАналитика", "Чтение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canRead)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра AI-прогноза выручки");
             try
             {
                 var results = await _context.Database
@@ -74,10 +84,8 @@ namespace BookHub.Controllers
                         "SELECT * FROM ai_revenue_forecast({0}, {1})", 
                         clubId ?? (object)DBNull.Value, days)
                     .ToListAsync();
-
                 var totalPredicted = results.Sum(r => r.predicted_revenue);
                 var avgConfidence = results.Average(r => r.confidence_level);
-
                 return Ok(new
                 {
                     success = true,
@@ -118,13 +126,17 @@ namespace BookHub.Controllers
         [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> GetMarketingInsights()
         {
+            // Проверка разрешения на просмотр AI-маркетинговых инсайтов
+            bool canRead = AuthorizationHelper.HasPermission(User, "AIАналитика", "Чтение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canRead)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра AI-маркетинговых инсайтов");
             try
             {
                 var results = await _context.Database
                     .SqlQueryRaw<MarketingInsightResult>(
                         "SELECT * FROM ai_marketing_insights()")
                     .ToListAsync();
-
                 return Ok(new
                 {
                     success = true,
@@ -164,13 +176,17 @@ namespace BookHub.Controllers
         [HttpGet("club-optimization")]
         public async Task<IActionResult> GetClubOptimization()
         {
+            // Проверка разрешения на просмотр AI-оптимизации клуба
+            bool canRead = AuthorizationHelper.HasPermission(User, "AIАналитика", "Чтение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canRead)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра AI-оптимизации клуба");
             try
             {
                 var results = await _context.Database
                     .SqlQueryRaw<ClubOptimizationResult>(
                         "SELECT * FROM ai_club_optimization()")
                     .ToListAsync();
-
                 return Ok(new
                 {
                     success = true,
@@ -210,13 +226,17 @@ namespace BookHub.Controllers
         [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> GetEquipmentHealth()
         {
+            // Проверка разрешения на просмотр AI-анализа оборудования
+            bool canRead = AuthorizationHelper.HasPermission(User, "AIАналитика", "Чтение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canRead)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра AI-анализа оборудования");
             try
             {
                 var results = await _context.Database
                     .SqlQueryRaw<EquipmentHealthResult>(
                         "SELECT * FROM ai_equipment_health()")
                     .ToListAsync();
-
                 return Ok(new
                 {
                     success = true,
@@ -258,13 +278,17 @@ namespace BookHub.Controllers
         [HttpGet("dashboard-summary")]
         public async Task<IActionResult> GetDashboardSummary()
         {
+            // Проверка разрешения на просмотр AI-дашборда
+            bool canRead = AuthorizationHelper.HasPermission(User, "AIАналитика", "Чтение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canRead)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для просмотра AI-дашборда");
             try
             {
                 var results = await _context.Database
                     .SqlQueryRaw<DashboardSummaryResult>(
                         "SELECT * FROM ai_dashboard_summary()")
                     .ToListAsync();
-
                 return Ok(new
                 {
                     success = true,
@@ -304,14 +328,17 @@ namespace BookHub.Controllers
         [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> RefreshAiData()
         {
+            // Проверка разрешения на обновление AI-данных
+            bool canUpdate = AuthorizationHelper.HasPermission(User, "AIАналитика", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            if (!canUpdate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для обновления AI-данных");
             try
             {
                 // Обновляем статистику PostgreSQL для лучшей производительности AI функций
                 await _context.Database.ExecuteSqlRawAsync("ANALYZE;");
-                
                 // Очищаем кеш и пересчитываем индексы
                 await _context.Database.ExecuteSqlRawAsync("REINDEX DATABASE CONCURRENTLY;");
-
                 return Ok(new
                 {
                     success = true,

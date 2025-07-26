@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using BookHub.Data;
 using BookHub.Models;
 using BookHub.Models.Dtos;
+using BookHub.Helpers;
 
 namespace BookHub.Controllers
 {
@@ -69,17 +70,23 @@ namespace BookHub.Controllers
         {
             if (id != dto.Id)
                 return BadRequest("ID в URL не совпадает с ID объекта.");
-
             var seat = await _context.Seats.FindAsync(id);
             if (seat == null)
                 return NotFound();
-
+            // Проверка разрешения на редактирование места
+            bool canEdit = AuthorizationHelper.HasPermission(User, "Места", "Изменение", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может редактировать только места своего клуба
+            var hall = await _context.Halls.FindAsync(seat.HallId);
+            if (User.IsInRole("Manager") && hall?.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canEdit = false;
+            if (!canEdit)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для редактирования места");
             seat.HallId = dto.HallId;
             seat.SeatNumber = dto.SeatNumber;
             seat.Description = dto.Description;
             seat.Status = dto.Status;
             seat.IsDeleted = dto.IsDeleted;
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -91,7 +98,6 @@ namespace BookHub.Controllers
                 else
                     throw;
             }
-
             return NoContent();
         }
 
@@ -99,6 +105,15 @@ namespace BookHub.Controllers
         [HttpPost]
         public async Task<ActionResult<SeatDto>> PostSeat(SeatDto dto)
         {
+            // Проверка разрешения на создание места
+            bool canCreate = AuthorizationHelper.HasPermission(User, "Места", "Создание", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            // Менеджер может создавать места только для своего клуба
+            var hall = await _context.Halls.FindAsync(dto.HallId);
+            if (User.IsInRole("Manager") && hall?.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canCreate = false;
+            if (!canCreate)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для создания места");
             var seat = new Seat
             {
                 HallId = dto.HallId,
@@ -107,12 +122,9 @@ namespace BookHub.Controllers
                 Status = dto.Status,
                 IsDeleted = dto.IsDeleted
             };
-
             _context.Seats.Add(seat);
             await _context.SaveChangesAsync();
-
             dto.Id = seat.Id;
-
             return CreatedAtAction(nameof(GetSeat), new { id = seat.Id }, dto);
         }
 
@@ -123,10 +135,17 @@ namespace BookHub.Controllers
             var seat = await _context.Seats.FindAsync(id);
             if (seat == null)
                 return NotFound();
-
+            // Проверка разрешения на удаление места
+            bool canDelete = AuthorizationHelper.HasPermission(User, "Места", "Удаление", (uid) =>
+                _context.UserRoles.Where(ur => ur.UserId == uid).Select(ur => ur.Role).FirstOrDefault());
+            var hall = await _context.Halls.FindAsync(seat.HallId);
+            // Менеджер может удалять только места своего клуба
+            if (User.IsInRole("Manager") && hall?.ClubId != AuthorizationHelper.GetManagedClubId(User))
+                canDelete = false;
+            if (!canDelete)
+                return AuthorizationHelper.CreateForbidResult("Недостаточно прав для удаления места");
             _context.Seats.Remove(seat);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
