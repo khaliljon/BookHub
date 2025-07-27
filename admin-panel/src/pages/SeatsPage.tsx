@@ -1,48 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Paper, Table, TableHead, TableRow, TableCell, TableBody, Button, CircularProgress } from '@mui/material';
 
-interface Club {
+interface Seat {
   id: number;
-  name: string;
-  type: string;
-  location: string;
+  label: string;
+  seatType: string;
+  roomId: number;
 }
 
-const ClubsPage: React.FC = () => {
-  const [clubs, setClubs] = useState<Club[]>([]);
+const SeatsPage: React.FC = () => {
+  const [seats, setSeats] = useState<Seat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/clubs')
+    fetch('/api/seats')
       .then(res => res.json())
       .then(data => {
-        setClubs(data);
+        setSeats(data);
         setLoading(false);
       });
   }, []);
 
   return (
     <Container maxWidth="lg" style={{ marginTop: 40 }}>
-      <Typography variant="h4" gutterBottom>Клубы</Typography>
+      <Typography variant="h4" gutterBottom>Места</Typography>
       <Paper>
         {loading ? <CircularProgress /> : (
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Название</TableCell>
-                <TableCell>Тип</TableCell>
-                <TableCell>Локация</TableCell>
+                <TableCell>Метка</TableCell>
+                <TableCell>Тип места</TableCell>
+                <TableCell>ID комнаты</TableCell>
                 <TableCell>Действия</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {clubs.map(club => (
-                <TableRow key={club.id}>
-                  <TableCell>{club.id}</TableCell>
-                  <TableCell>{club.name}</TableCell>
-                  <TableCell>{club.type}</TableCell>
-                  <TableCell>{club.location}</TableCell>
+              {seats.map(seat => (
+                <TableRow key={seat.id}>
+                  <TableCell>{seat.id}</TableCell>
+                  <TableCell>{seat.label}</TableCell>
+                  <TableCell>{seat.seatType}</TableCell>
+                  <TableCell>{seat.roomId}</TableCell>
                   <TableCell>
                     <Button size="small" variant="outlined">Редактировать</Button>
                     <Button size="small" color="error" variant="outlined" style={{ marginLeft: 8 }}>Удалить</Button>
@@ -57,4 +57,4 @@ const ClubsPage: React.FC = () => {
   );
 };
 
-export default ClubsPage;
+export default SeatsPage;

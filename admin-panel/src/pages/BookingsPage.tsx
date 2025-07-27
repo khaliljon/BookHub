@@ -1,524 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Chip,
-  Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Tooltip,
-  TextField,
-  MenuItem,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Divider,
-  Alert,
-} from '@mui/material';
-import {
-  Event as EventIcon,
-  Schedule as ScheduleIcon,
-  Person as PersonIcon,
-  LocationOn as LocationIcon,
-  Payment as PaymentIcon,
-  CheckCircle as CheckIcon,
-  Cancel as CancelIcon,
-  Pending as PendingIcon,
-  CalendarToday as CalendarIcon,
-  TrendingUp,
-  AccessTime,
-  Computer,
-  AttachMoney,
-  FilterList,
-  Refresh,
-  Visibility,
-  Edit,
-  Delete,
-} from '@mui/icons-material';
-import apiService from '../services/api';
-import { Booking, BookingStatus, BookingCamel } from '../types';
+import React, { useEffect, useState } from 'react';
+import { Container, Typography, Paper, Table, TableHead, TableRow, TableCell, TableBody, Button, CircularProgress } from '@mui/material';
+
+interface Booking {
+  id: number;
+  userId: number;
+  seatId: number;
+  startTime: string;
+  endTime: string;
+  status: string;
+}
 
 const BookingsPage: React.FC = () => {
-  const [bookings, setBookings] = useState<BookingCamel[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterClub, setFilterClub] = useState('all');
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await apiService.getBookings(1, 100);
-        // Маппинг: приводим к camelCase, если пришли поля с большой буквы
-        const mapBooking = (b: any): BookingCamel => ({
-          ...b,
-          date: b.date || b.Date || '',
-          startTime: b.startTime || b.StartTime || '',
-          endTime: b.endTime || b.EndTime || '',
-          createdAt: b.createdAt || b.CreatedAt || '',
-          totalAmount: b.totalAmount || b.TotalAmount || 0,
-        });
-        const bookingsArr: BookingCamel[] = (data.items || data).map(mapBooking);
-        setBookings(bookingsArr);
-        // DEBUG: посмотреть реальные поля
-        if (bookingsArr.length > 0) {
-          // eslint-disable-next-line no-console
-          console.log('booking sample:', bookingsArr[0]);
-        }
-      } catch (err: any) {
-        setError(err.message || 'Ошибка загрузки бронирований');
-      } finally {
+    fetch('/api/bookings')
+      .then(res => res.json())
+      .then(data => {
+        setBookings(data);
         setLoading(false);
-      }
-    };
-    fetchBookings();
+      });
   }, []);
 
-  const getStatusColor = (status: string | undefined) => {
-    switch (status) {
-      case BookingStatus.CONFIRMED: return 'success';
-      case BookingStatus.PENDING: return 'warning';
-      case BookingStatus.CANCELLED: return 'error';
-      default: return 'default';
-    }
-  };
-
-  const getStatusIcon = (status: string | undefined) => {
-    switch (status) {
-      case BookingStatus.CONFIRMED: return <CheckIcon />;
-      case BookingStatus.PENDING: return <PendingIcon />;
-      case BookingStatus.CANCELLED: return <CancelIcon />;
-      default: return <ScheduleIcon />;
-    }
-  };
-
-  const getStatusText = (status: string | undefined) => {
-    switch (status) {
-      case BookingStatus.CONFIRMED: return 'Подтверждено';
-      case BookingStatus.PENDING: return 'Ожидает';
-      case BookingStatus.CANCELLED: return 'Отменено';
-      default: return status || '';
-    }
-  };
-
-  // Статистика
-  const totalBookings = bookings.length;
-  const confirmedBookings = bookings.filter(b => b.status === BookingStatus.CONFIRMED).length;
-  const pendingBookings = bookings.filter(b => b.status === BookingStatus.PENDING).length;
-  const totalRevenue = bookings
-    .filter(b => b.payments?.some(p => p.status === 'Completed'))
-    .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
-
-  // 1. Собираем уникальные статусы и клубы из данных
-  const uniqueStatuses = Array.from(new Set(bookings.map(b => b.status))).filter(Boolean);
-  const uniqueClubs = Array.from(new Set(bookings.map(b => b.seat?.hall?.club?.name))).filter(Boolean);
-
-  // 2. Фильтрация по статусу и клубу
-  const filteredBookings = bookings.filter(booking => {
-    const statusMatch = filterStatus === 'all' || booking.status === filterStatus;
-    const clubMatch = filterClub === 'all' || booking.seat?.hall?.club?.name === filterClub;
-    return statusMatch && clubMatch;
-  });
-
-  // 3. Корректное отображение времени
-  const formatDateTime = (dateStr: string, timeStr: string) => {
-    if (!dateStr || !timeStr) return '';
-    // Фикс для TimeSpan типа "01:00:00" чтобы не было ошибки на Safari
-    let t = timeStr.length === 5 ? timeStr + ':00' : timeStr;
-    const dt = new Date(`${dateStr}T${t}`);
-    if (isNaN(dt.getTime())) return '';
-    return dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  };
-  const formatTime = (dateStr: string, timeStr: string) => {
-    if (!dateStr || !timeStr) return '';
-    let t = timeStr.length === 5 ? timeStr + ':00' : timeStr;
-    const dt = new Date(`${dateStr}T${t}`);
-    if (isNaN(dt.getTime())) return timeStr.substring(0,5);
-    return dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  if (loading) {
-    return <Box p={3}><Typography>Загрузка...</Typography></Box>;
-  }
-  if (error) {
-    return <Box p={3}><Alert severity="error">{error}</Alert></Box>;
-  }
-
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Заголовок */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', mb: 1 }}>
-          📅 Управление бронированиями
-        </Typography>
-        <Typography variant="subtitle1" sx={{ color: '#666' }}>
-          Отслеживайте и управляйте всеми бронированиями
-        </Typography>
-      </Box>
-
-      {/* Статистика */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#1976d2',
-            color: 'white',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {totalBookings}
-                  </Typography>
-                  <Typography variant="body2">
-                    Всего бронирований
-                  </Typography>
-                </Box>
-                <EventIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#2e7d32',
-            color: 'white',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {confirmedBookings}
-                  </Typography>
-                  <Typography variant="body2">
-                    Подтверждено
-                  </Typography>
-                </Box>
-                <CheckIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#ed6c02',
-            color: 'white',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {pendingBookings}
-                  </Typography>
-                  <Typography variant="body2">
-                    Ожидает
-                  </Typography>
-                </Box>
-                <PendingIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#9c27b0',
-            color: 'white',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    ₸{(totalRevenue / 1000).toFixed(0)}K
-                  </Typography>
-                  <Typography variant="body2">
-                    Доход
-                  </Typography>
-                </Box>
-                <AttachMoney sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={3}>
-        {/* Основная таблица */}
-        <Grid item xs={12} lg={8}>
-          {/* Фильтры */}
-          <Card sx={{ borderRadius: 2, mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', mr: 2 }}>
-                  🔍 Фильтры
-                </Typography>
-                
-                <TextField
-                  select
-                  size="small"
-                  label="Статус"
-                  value={filterStatus}
-                  onChange={e => setFilterStatus(e.target.value)}
-                  sx={{ minWidth: 150 }}
-                >
-                  <MenuItem value="all">Все статусы</MenuItem>
-                  {uniqueStatuses.map(status => (
-                    <MenuItem key={status} value={status}>{status}</MenuItem>
-                  ))}
-                </TextField>
-
-                <TextField
-                  select
-                  size="small"
-                  label="Клуб"
-                  value={filterClub}
-                  onChange={e => setFilterClub(e.target.value)}
-                  sx={{ minWidth: 200 }}
-                >
-                  <MenuItem value="all">Все клубы</MenuItem>
-                  {uniqueClubs.map(club => (
-                    <MenuItem key={club} value={club}>{club}</MenuItem>
-                  ))}
-                </TextField>
-
-                <Button
-                  variant="outlined"
-                  startIcon={<FilterList />}
-                  onClick={() => {
-                    setFilterStatus('all');
-                    setFilterClub('all');
-                  }}
-                >
-                  Сбросить
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Таблица бронирований */}
-          <Card sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                📋 Список бронирований
-              </Typography>
-              
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Пользователь</TableCell>
-                      <TableCell>Клуб/Зал</TableCell>
-                      <TableCell>Время</TableCell>
-                      <TableCell>Место</TableCell>
-                      <TableCell>Стоимость</TableCell>
-                      <TableCell>Статус</TableCell>
-                      <TableCell>Действия</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredBookings.map((booking) => (
-                      <TableRow 
-                        key={booking.id}
-                        sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
-                      >
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar sx={{ width: 40, height: 40 }}>
-                              {booking.user?.fullName ? booking.user.fullName[0] : '?'}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                {booking.user?.fullName || ''}
-                              </Typography>
-                              {/* booking.gameType удалён, такого поля нет */}
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {booking.seat?.hall?.club?.name || ''}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {booking.seat?.hall?.name || ''}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {formatDateTime(booking.date, booking.startTime)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {formatTime(booking.date, booking.startTime)} - {formatTime(booking.date, booking.endTime)}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Chip 
-                            label={`Место ${booking.seat?.seatNumber || booking.seat?.id || ''}`}
-                            variant="outlined"
-                            size="small"
-                            icon={<Computer />}
-                          />
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                            ₸{(booking.totalAmount || 0).toLocaleString()}
-                          </Typography>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Chip
-                            icon={getStatusIcon(booking.status || '')}
-                            label={getStatusText(booking.status || '')}
-                            color={getStatusColor(booking.status || '')}
-                            size="small"
-                          />
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Tooltip title="Просмотр">
-                              <IconButton size="small" sx={{ color: '#1976d2' }} onClick={() => alert(`Просмотр бронирования #${booking.id}`)}>
-                                <Visibility fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Редактировать">
-                              <IconButton size="small" sx={{ color: '#ed6c02' }} onClick={() => alert(`Редактировать бронирование #${booking.id}`)}>
-                                <Edit fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Удалить">
-                              <IconButton size="small" sx={{ color: '#d32f2f' }} onClick={() => alert(`Удалить бронирование #${booking.id}`)}>
-                                <Delete fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Боковая панель */}
-        <Grid item xs={12} lg={4}>
-          {/* Недавние бронирования */}
-          <Card sx={{ borderRadius: 2, mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                🕒 Недавние бронирования
-              </Typography>
-              
-              <List sx={{ p: 0 }}>
-                {bookings.slice(0, 5).map((booking, index) => (
-                  <React.Fragment key={booking.id}>
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemAvatar>
-                        <Avatar sx={{ width: 36, height: 36 }}>
-                          {booking.user?.fullName ? booking.user.fullName[0] : '?'}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {booking.user?.fullName || ''}
-                            </Typography>
-                            <Chip
-                              label={getStatusText(booking.status || '')}
-                              color={getStatusColor(booking.status || '')}
-                              size="small"
-                              sx={{ height: 20, fontSize: '10px' }}
-                            />
-                          </Box>
-                        }
-                        secondary={
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              {booking.seat?.hall?.club?.name || ''} • ₸{(booking.totalAmount || 0).toLocaleString()}
-                            </Typography>
-                            <br />
-                            <Typography variant="caption" color="text.secondary">
-                              {formatTime(booking.createdAt, booking.startTime)}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </ListItem>
-                    {index < 4 && <Divider />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-
-          {/* Топ клубы */}
-          <Card sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                🏆 Топ клубы по бронированиям
-              </Typography>
-              
-              <List sx={{ p: 0 }}>
-                {[
-                  { name: 'CyberArena Almaty', bookings: 3, revenue: 9300 },
-                  { name: 'GameZone Astana', bookings: 1, revenue: 5400 },
-                  { name: 'ProGaming Shymkent', bookings: 1, revenue: 3600 },
-                ].map((club, index) => (
-                  <React.Fragment key={club.name}>
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemAvatar>
-                        <Avatar sx={{ 
-                          backgroundColor: index === 0 ? '#ffd700' : index === 1 ? '#c0c0c0' : '#cd7f32',
-                          color: 'white',
-                          fontWeight: 'bold',
-                          width: 32,
-                          height: 32,
-                        }}>
-                          {index + 1}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={club.name}
-                        secondary={`${club.bookings} бронирований • ₸${club.revenue.toLocaleString()}`}
-                      />
-                    </ListItem>
-                    {index < 2 && <Divider />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+    <Container maxWidth="lg" style={{ marginTop: 40 }}>
+      <Typography variant="h4" gutterBottom>Бронирования</Typography>
+      <Paper>
+        {loading ? <CircularProgress /> : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>ID пользователя</TableCell>
+                <TableCell>ID места</TableCell>
+                <TableCell>Начало</TableCell>
+                <TableCell>Конец</TableCell>
+                <TableCell>Статус</TableCell>
+                <TableCell>Действия</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {bookings.map(booking => (
+                <TableRow key={booking.id}>
+                  <TableCell>{booking.id}</TableCell>
+                  <TableCell>{booking.userId}</TableCell>
+                  <TableCell>{booking.seatId}</TableCell>
+                  <TableCell>{booking.startTime}</TableCell>
+                  <TableCell>{booking.endTime}</TableCell>
+                  <TableCell>{booking.status}</TableCell>
+                  <TableCell>
+                    <Button size="small" variant="outlined">Редактировать</Button>
+                    <Button size="small" color="error" variant="outlined" style={{ marginLeft: 8 }}>Удалить</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
+    </Container>
   );
 };
 

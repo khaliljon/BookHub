@@ -8,46 +8,45 @@ namespace BookHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class SeatsController : ControllerBase
+    public class RoomsController : ControllerBase
     {
         private readonly BookHubDbContext _db;
-        public SeatsController(BookHubDbContext db) { _db = db; }
+        public RoomsController(BookHubDbContext db) { _db = db; }
 
         [HttpGet]
         [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
-        public IActionResult GetAll() => Ok(_db.Seats.ToList());
+        public IActionResult GetAll() => Ok(_db.Rooms.ToList());
 
         [HttpPost]
         [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
-        public IActionResult Create([FromBody] Seat seat)
+        public IActionResult Create([FromBody] Room room)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            _db.Seats.Add(seat);
+            _db.Rooms.Add(room);
             _db.SaveChanges();
-            return CreatedAtAction(nameof(GetAll), new { id = seat.Id }, seat);
+            return CreatedAtAction(nameof(GetAll), new { id = room.Id }, room);
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
-        public IActionResult Update(int id, [FromBody] Seat seat)
+        public IActionResult Update(int id, [FromBody] Room room)
         {
-            var s = _db.Seats.Find(id);
-            if (s == null) return NotFound();
-            s.Label = seat.Label;
-            s.SeatType = seat.SeatType;
-            s.IsActive = seat.IsActive;
-            s.MetadataJson = seat.MetadataJson;
+            var r = _db.Rooms.Find(id);
+            if (r == null) return NotFound();
+            r.Name = room.Name;
+            r.RoomType = room.RoomType;
+            r.MetadataJson = room.MetadataJson;
             _db.SaveChanges();
-            return Ok(s);
+            return Ok(r);
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
         public IActionResult Delete(int id)
         {
-            var s = _db.Seats.Find(id);
-            if (s == null) return NotFound();
-            _db.Seats.Remove(s);
+            var r = _db.Rooms.Find(id);
+            if (r == null) return NotFound();
+            _db.Rooms.Remove(r);
             _db.SaveChanges();
             return NoContent();
         }

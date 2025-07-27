@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BookHub.Services;
 using BookHub.Models;
+using BookHub.Models.New;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,13 +87,13 @@ using (var scope = app.Services.CreateScope())
     // Создаем роли, если их нет (резервный способ)
     if (!await context.Roles.AnyAsync())
     {
-        var roles = new[]
+        var roles = new List<Role>
         {
-            new Role { Name = "Admin", Description = "Администратор системы", IsActive = true },
-            new Role { Name = "Manager", Description = "Менеджер клуба", IsActive = true },
-            new Role { Name = "User", Description = "Обычный пользователь", IsActive = true }
+            new Role { Name = "SystemAdmin", Description = "Полный доступ ко всей системе" },
+            new Role { Name = "NetworkOwner", Description = "Владелец сети/франшизы клубов" },
+            new Role { Name = "ClubManager", Description = "Управление клубом" },
+            new Role { Name = "User", Description = "Обычный пользователь" }
         };
-        
         context.Roles.AddRange(roles);
         await context.SaveChangesAsync();
     }

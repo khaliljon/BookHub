@@ -5,7 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using BookHub.Models;
+using BookHub.Models.New;
 
 namespace BookHub.Services
 {
@@ -25,19 +25,13 @@ namespace BookHub.Services
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email ?? user.PhoneNumber),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Используем стандартный claim для UserId
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email ?? user.Phone ?? string.Empty),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim("id", user.Id.ToString()),
-                new Claim("fullName", user.FullName ?? ""),
-                new Claim("email", user.Email ?? ""),
-                new Claim("phone", user.PhoneNumber ?? "")
+                new Claim("fullName", user.FullName ?? string.Empty),
+                new Claim("email", user.Email ?? string.Empty),
+                new Claim("phone", user.Phone ?? string.Empty)
             };
-
-            // Добавляем ManagedClubId для менеджеров
-            if (user.ManagedClubId.HasValue)
-            {
-                claims.Add(new Claim("ManagedClubId", user.ManagedClubId.Value.ToString()));
-            }
 
             // Добавляем роли
             foreach (var role in roles)

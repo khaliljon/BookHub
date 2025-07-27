@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Paper, Table, TableHead, TableRow, TableCell, TableBody, Button, CircularProgress } from '@mui/material';
 
-interface Club {
+interface Venue {
   id: number;
   name: string;
   type: string;
   location: string;
 }
 
-const ClubsPage: React.FC = () => {
-  const [clubs, setClubs] = useState<Club[]>([]);
+const VenuesPage: React.FC = () => {
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/clubs')
+    fetch('/api/venues')
       .then(res => res.json())
       .then(data => {
-        setClubs(data);
+        setVenues(data);
         setLoading(false);
       });
   }, []);
 
   return (
     <Container maxWidth="lg" style={{ marginTop: 40 }}>
-      <Typography variant="h4" gutterBottom>Клубы</Typography>
+      <Typography variant="h4" gutterBottom>Заведения</Typography>
       <Paper>
         {loading ? <CircularProgress /> : (
           <Table>
@@ -37,12 +37,12 @@ const ClubsPage: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {clubs.map(club => (
-                <TableRow key={club.id}>
-                  <TableCell>{club.id}</TableCell>
-                  <TableCell>{club.name}</TableCell>
-                  <TableCell>{club.type}</TableCell>
-                  <TableCell>{club.location}</TableCell>
+              {venues.map(venue => (
+                <TableRow key={venue.id}>
+                  <TableCell>{venue.id}</TableCell>
+                  <TableCell>{venue.name}</TableCell>
+                  <TableCell>{venue.type}</TableCell>
+                  <TableCell>{venue.location}</TableCell>
                   <TableCell>
                     <Button size="small" variant="outlined">Редактировать</Button>
                     <Button size="small" color="error" variant="outlined" style={{ marginLeft: 8 }}>Удалить</Button>
@@ -57,4 +57,4 @@ const ClubsPage: React.FC = () => {
   );
 };
 
-export default ClubsPage;
+export default VenuesPage;

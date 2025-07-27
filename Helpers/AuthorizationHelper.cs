@@ -1,148 +1,129 @@
 using System.Security.Claims;
-using BookHub.Models;
+using BookHub.Models.New;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookHub.Helpers
 {
+    /// <summary>
+    /// Хелпер для проверки прав доступа. Единая точка для всех контроллеров.
+    /// </summary>
     public static class AuthorizationHelper
     {
         /// <summary>
-        /// Проверяет, есть ли у пользователя разрешение на действие по матрице прав роли
+        /// Проверяет право пользователя по матрице или дефолтным значениям.
         /// </summary>
-        public static bool HasPermission(ClaimsPrincipal user, string permissionGroup, string permissionAction, Func<int, Role?> getRoleByUserId)
+        public static bool HasPermission(ClaimsPrincipal user, string group, string action, Func<int, Role?> getRoleByUserId)
         {
+            if (user == null) return false;
+        if (IsSuperAdmin(user)) return true;
             int userId = GetCurrentUserId(user);
             var role = getRoleByUserId(userId);
-            if (role == null || role.Permissions == null)
+            if (role == null)
                 return false;
-            if (!role.Permissions.ContainsKey(permissionGroup))
-                return false;
-            var group = role.Permissions[permissionGroup];
-            if (!group.ContainsKey(permissionAction))
-                return false;
-            return group[permissionAction];
+            // В новой архитектуре проверяем только по имени роли
+            return GetDefaultPermission(role.Name, group, action);
         }
+
         /// <summary>
-        /// Получает ID текущего пользователя из JWT токена
+        /// Дефолтные права для ролей (если нет матрицы).
+        /// </summary>
+        private static bool GetDefaultPermission(string roleName, string group, string action)
+        {
+            if (string.IsNullOrEmpty(roleName)) return false;
+            switch (roleName)
+            {
+                case "SuperAdmin": return true;
+                case "Admin": return action != "delete";
+                case "Manager": return action != "delete" && group != "АудитЛоги";
+                case "User": return action == "read" || action == "update";
+                default: return false;
+            }
+        }
+
+        /// <summary>
+        /// Получить ID текущего пользователя.
         /// </summary>
         public static int GetCurrentUserId(ClaimsPrincipal user)
         {
-            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return int.TryParse(userIdClaim, out int userId) ? userId : 0;
         }
 
         /// <summary>
-        /// Получает ID клуба, которым управляет текущий пользователь (для менеджеров)
+        /// Получить ID клуба, которым управляет менеджер.
         /// </summary>
         public static int? GetManagedClubId(ClaimsPrincipal user)
         {
-            var clubIdClaim = user.FindFirst("ManagedClubId")?.Value;
+            var clubIdClaim = user?.FindFirst("ManagedClubId")?.Value;
             return int.TryParse(clubIdClaim, out int clubId) ? clubId : null;
         }
 
         /// <summary>
-        /// Проверяет, является ли пользователь SuperAdmin
+        /// Проверка роли SuperAdmin.
         /// </summary>
-        public static bool IsSuperAdmin(ClaimsPrincipal user)
-        {
-            return user.IsInRole("SuperAdmin");
-        }
+        public static bool IsSuperAdmin(ClaimsPrincipal user) => user?.IsInRole("SuperAdmin") ?? false;
 
         /// <summary>
-        /// Проверяет, является ли пользователь Admin или SuperAdmin
+        /// Проверка роли Admin или выше.
         /// </summary>
-        public static bool IsAdminOrHigher(ClaimsPrincipal user)
-        {
-            return user.IsInRole("SuperAdmin") || user.IsInRole("Admin");
-        }
+        public static bool IsAdminOrHigher(ClaimsPrincipal user) => user?.IsInRole("SuperAdmin") == true || user?.IsInRole("Admin") == true;
 
         /// <summary>
-        /// Проверяет, является ли пользователь Manager, Admin или SuperAdmin
+        /// Проверка роли Manager или выше.
         /// </summary>
-        public static bool IsManagerOrHigher(ClaimsPrincipal user)
-        {
-            return user.IsInRole("SuperAdmin") || user.IsInRole("Admin") || user.IsInRole("Manager");
-        }
+        public static bool IsManagerOrHigher(ClaimsPrincipal user) => user?.IsInRole("SuperAdmin") == true || user?.IsInRole("Admin") == true || user?.IsInRole("Manager") == true;
 
         /// <summary>
-        /// Проверяет, может ли пользователь управлять указанным клубом
+        /// Может ли пользователь управлять клубом.
         /// </summary>
         public static bool CanManageClub(ClaimsPrincipal user, int clubId)
         {
-            // SuperAdmin и Admin могут управлять любым клубом
-            if (IsAdminOrHigher(user))
-                return true;
-
-            // Manager может управлять только своим клубом
-            if (user.IsInRole("Manager"))
+            if (IsAdminOrHigher(user)) return true;
+            if (user?.IsInRole("Manager") == true)
             {
                 var managedClubId = GetManagedClubId(user);
                 return managedClubId.HasValue && managedClubId.Value == clubId;
             }
-
             return false;
         }
 
         /// <summary>
-        /// Проверяет, может ли пользователь просматривать данные другого пользователя
+        /// Может ли пользователь просматривать другого пользователя.
         /// </summary>
         public static bool CanViewUser(ClaimsPrincipal user, int targetUserId)
         {
             var currentUserId = GetCurrentUserId(user);
-            
-            // Может просматривать свой профиль
-            if (currentUserId == targetUserId)
-                return true;
-
-            // SuperAdmin и Admin могут просматривать любого
-            return IsAdminOrHigher(user);
+            return currentUserId == targetUserId || IsAdminOrHigher(user);
         }
 
         /// <summary>
-        /// Проверяет, может ли пользователь редактировать данные другого пользователя
+        /// Может ли пользователь редактировать другого пользователя.
         /// </summary>
         public static bool CanEditUser(ClaimsPrincipal user, int targetUserId)
         {
             var currentUserId = GetCurrentUserId(user);
-            
-            // Может редактировать свой профиль
-            if (currentUserId == targetUserId)
-                return true;
-
-            // SuperAdmin и Admin могут редактировать любого
-            return IsAdminOrHigher(user);
+            return currentUserId == targetUserId || IsAdminOrHigher(user);
         }
 
         /// <summary>
-        /// Проверяет, может ли пользователь просматривать бронирование
+        /// Может ли пользователь просматривать бронирование.
         /// </summary>
         public static bool CanViewBooking(ClaimsPrincipal user, int bookingUserId, int? clubId = null)
         {
             var currentUserId = GetCurrentUserId(user);
-            
-            // Может просматривать своё бронирование
-            if (currentUserId == bookingUserId)
-                return true;
-
-            // SuperAdmin и Admin могут просматривать любые бронирования
-            if (IsAdminOrHigher(user))
-                return true;
-
-            // Manager может просматривать бронирования своего клуба
-            if (user.IsInRole("Manager") && clubId.HasValue)
-            {
+            if (currentUserId == bookingUserId) return true;
+            if (IsAdminOrHigher(user)) return true;
+            if (user?.IsInRole("Manager") == true && clubId.HasValue)
                 return CanManageClub(user, clubId.Value);
-            }
-
             return false;
         }
 
         /// <summary>
-        /// Возвращает ActionResult для случая недостаточных прав
+        /// Возвращает результат 403 с сообщением.
         /// </summary>
-        public static ForbidResult CreateForbidResult(string message = "Недостаточно прав для выполнения этой операции")
+        public static IActionResult CreateForbidResult(string message = "Недостаточно прав для выполнения этой операции")
         {
-            return new ForbidResult(message);
+            return new ObjectResult(new { error = message }) { StatusCode = 403 };
         }
     }
-    }
+}

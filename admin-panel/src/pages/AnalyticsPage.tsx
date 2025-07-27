@@ -1,48 +1,50 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Paper, Table, TableHead, TableRow, TableCell, TableBody, Button, CircularProgress } from '@mui/material';
 
-interface Role {
+interface Analytics {
   id: number;
-  name: string;
-  description: string;
+  userId: number;
+  action: string;
+  timestamp: string;
 }
 
-const RolesPage: React.FC = () => {
-  const [roles, setRoles] = useState<Role[]>([]);
+const AnalyticsPage: React.FC = () => {
+  const [analytics, setAnalytics] = useState<Analytics[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/roles')
+    fetch('/api/analytics')
       .then(res => res.json())
       .then(data => {
-        setRoles(data);
+        setAnalytics(data);
         setLoading(false);
       });
   }, []);
 
   return (
     <Container maxWidth="lg" style={{ marginTop: 40 }}>
-      <Typography variant="h4" gutterBottom>Роли</Typography>
+      <Typography variant="h4" gutterBottom>Аналитика</Typography>
       <Paper>
         {loading ? <CircularProgress /> : (
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Название</TableCell>
-                <TableCell>Описание</TableCell>
+                <TableCell>ID пользователя</TableCell>
+                <TableCell>Действие</TableCell>
+                <TableCell>Время</TableCell>
                 <TableCell>Действия</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {roles.map(role => (
-                <TableRow key={role.id}>
-                  <TableCell>{role.id}</TableCell>
-                  <TableCell>{role.name}</TableCell>
-                  <TableCell>{role.description}</TableCell>
+              {analytics.map(a => (
+                <TableRow key={a.id}>
+                  <TableCell>{a.id}</TableCell>
+                  <TableCell>{a.userId}</TableCell>
+                  <TableCell>{a.action}</TableCell>
+                  <TableCell>{a.timestamp}</TableCell>
                   <TableCell>
-                    <Button size="small" variant="outlined">Редактировать</Button>
-                    <Button size="small" color="error" variant="outlined" style={{ marginLeft: 8 }}>Удалить</Button>
+                    <Button size="small" variant="outlined">Подробнее</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -54,4 +56,4 @@ const RolesPage: React.FC = () => {
   );
 };
 
-export default RolesPage;
+export default AnalyticsPage;

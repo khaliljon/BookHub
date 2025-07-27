@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Paper, Table, TableHead, TableRow, TableCell, TableBody, Button, CircularProgress } from '@mui/material';
 
-interface Club {
+interface Room {
   id: number;
   name: string;
-  type: string;
-  location: string;
+  roomType: string;
+  venueId: number;
 }
 
-const ClubsPage: React.FC = () => {
-  const [clubs, setClubs] = useState<Club[]>([]);
+const RoomsPage: React.FC = () => {
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/clubs')
+    fetch('/api/rooms')
       .then(res => res.json())
       .then(data => {
-        setClubs(data);
+        setRooms(data);
         setLoading(false);
       });
   }, []);
 
   return (
     <Container maxWidth="lg" style={{ marginTop: 40 }}>
-      <Typography variant="h4" gutterBottom>Клубы</Typography>
+      <Typography variant="h4" gutterBottom>Комнаты</Typography>
       <Paper>
         {loading ? <CircularProgress /> : (
           <Table>
@@ -31,18 +31,18 @@ const ClubsPage: React.FC = () => {
               <TableRow>
                 <TableCell>ID</TableCell>
                 <TableCell>Название</TableCell>
-                <TableCell>Тип</TableCell>
-                <TableCell>Локация</TableCell>
+                <TableCell>Тип комнаты</TableCell>
+                <TableCell>ID клуба</TableCell>
                 <TableCell>Действия</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {clubs.map(club => (
-                <TableRow key={club.id}>
-                  <TableCell>{club.id}</TableCell>
-                  <TableCell>{club.name}</TableCell>
-                  <TableCell>{club.type}</TableCell>
-                  <TableCell>{club.location}</TableCell>
+              {rooms.map(room => (
+                <TableRow key={room.id}>
+                  <TableCell>{room.id}</TableCell>
+                  <TableCell>{room.name}</TableCell>
+                  <TableCell>{room.roomType}</TableCell>
+                  <TableCell>{room.venueId}</TableCell>
                   <TableCell>
                     <Button size="small" variant="outlined">Редактировать</Button>
                     <Button size="small" color="error" variant="outlined" style={{ marginLeft: 8 }}>Удалить</Button>
@@ -57,4 +57,4 @@ const ClubsPage: React.FC = () => {
   );
 };
 
-export default ClubsPage;
+export default RoomsPage;
