@@ -15,6 +15,9 @@ namespace BookHub.Models.New
         [Column("venue_id")]
         public int VenueId { get; set; }
 
+        [ForeignKey("VenueId")]
+        public Venue Venue { get; set; }
+
         [Column("day_of_week")]
         public string? DayOfWeek { get; set; }
 

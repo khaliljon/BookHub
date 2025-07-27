@@ -24,5 +24,8 @@ namespace BookHub.Models.New
 
         [Column("permissions")]
         public string? PermissionsJson { get; set; }
+
+        // Навигация: связи с пользователями
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }
 }

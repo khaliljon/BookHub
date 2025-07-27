@@ -49,6 +49,8 @@ namespace BookHubApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("analytics");
                 });
 
@@ -60,6 +62,9 @@ namespace BookHubApi.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ClubId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -91,7 +96,81 @@ namespace BookHubApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClubId");
+
+                    b.HasIndex("SeatId");
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("bookings");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Club", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("text")
+                        .HasColumnName("metadata_json");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int?>("NetworkId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OwnerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NetworkId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Clubs");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Network", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("text")
+                        .HasColumnName("metadata_json");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Network");
                 });
 
             modelBuilder.Entity("BookHub.Models.New.Notification", b =>
@@ -124,6 +203,8 @@ namespace BookHubApi.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("notifications");
                 });
@@ -163,6 +244,8 @@ namespace BookHubApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BookingId");
+
                     b.ToTable("payments");
                 });
 
@@ -194,6 +277,8 @@ namespace BookHubApi.Migrations
                         .HasColumnName("section");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("permissions");
                 });
@@ -228,6 +313,10 @@ namespace BookHubApi.Migrations
                         .HasColumnName("venue_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("VenueId");
 
                     b.ToTable("reviews");
                 });
@@ -302,6 +391,9 @@ namespace BookHubApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ClubId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("MetadataJson")
                         .HasColumnType("text")
                         .HasColumnName("metadata");
@@ -319,6 +411,10 @@ namespace BookHubApi.Migrations
                         .HasColumnName("venue_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
+
+                    b.HasIndex("VenueId");
 
                     b.ToTable("rooms");
                 });
@@ -342,7 +438,7 @@ namespace BookHubApi.Migrations
 
                     b.Property<string>("MetadataJson")
                         .HasColumnType("text")
-                        .HasColumnName("metadata");
+                        .HasColumnName("metadata_json");
 
                     b.Property<int>("RoomId")
                         .HasColumnType("integer")
@@ -353,6 +449,8 @@ namespace BookHubApi.Migrations
                         .HasColumnName("seat_type");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
 
                     b.ToTable("seats");
                 });
@@ -369,6 +467,9 @@ namespace BookHubApi.Migrations
                     b.Property<string>("Avatar")
                         .HasColumnType("text")
                         .HasColumnName("avatar");
+
+                    b.Property<int?>("ClubId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -396,7 +497,14 @@ namespace BookHubApi.Migrations
                         .HasColumnType("text")
                         .HasColumnName("phone");
 
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("role");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
 
                     b.ToTable("users");
                 });
@@ -418,6 +526,8 @@ namespace BookHubApi.Migrations
                         .HasColumnName("assigned_at");
 
                     b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("user_roles");
                 });
@@ -463,6 +573,8 @@ namespace BookHubApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OwnerId");
+
                     b.ToTable("venues");
                 });
 
@@ -497,7 +609,213 @@ namespace BookHubApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("VenueId");
+
                     b.ToTable("work_schedules");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Analytics", b =>
+                {
+                    b.HasOne("BookHub.Models.New.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Booking", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Club", null)
+                        .WithMany("Bookings")
+                        .HasForeignKey("ClubId");
+
+                    b.HasOne("BookHub.Models.New.Seat", "Seat")
+                        .WithMany("Bookings")
+                        .HasForeignKey("SeatId");
+
+                    b.HasOne("BookHub.Models.New.User", "User")
+                        .WithMany("Bookings")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Seat");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Club", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Network", "Network")
+                        .WithMany("Clubs")
+                        .HasForeignKey("NetworkId");
+
+                    b.HasOne("BookHub.Models.New.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId");
+
+                    b.Navigation("Network");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Notification", b =>
+                {
+                    b.HasOne("BookHub.Models.New.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Payment", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId");
+
+                    b.Navigation("Booking");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Permission", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Review", b =>
+                {
+                    b.HasOne("BookHub.Models.New.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookHub.Models.New.Venue", "Venue")
+                        .WithMany()
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Room", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Club", null)
+                        .WithMany("Rooms")
+                        .HasForeignKey("ClubId");
+
+                    b.HasOne("BookHub.Models.New.Venue", "Venue")
+                        .WithMany("Rooms")
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Seat", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Room", "Room")
+                        .WithMany("Seats")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.User", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Club", null)
+                        .WithMany("Staff")
+                        .HasForeignKey("ClubId");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.UserRole", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookHub.Models.New.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Venue", b =>
+                {
+                    b.HasOne("BookHub.Models.New.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.WorkSchedule", b =>
+                {
+                    b.HasOne("BookHub.Models.New.Venue", "Venue")
+                        .WithMany()
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Club", b =>
+                {
+                    b.Navigation("Bookings");
+
+                    b.Navigation("Rooms");
+
+                    b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Network", b =>
+                {
+                    b.Navigation("Clubs");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Room", b =>
+                {
+                    b.Navigation("Seats");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Seat", b =>
+                {
+                    b.Navigation("Bookings");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.User", b =>
+                {
+                    b.Navigation("Bookings");
+                });
+
+            modelBuilder.Entity("BookHub.Models.New.Venue", b =>
+                {
+                    b.Navigation("Rooms");
                 });
 #pragma warning restore 612, 618
         }

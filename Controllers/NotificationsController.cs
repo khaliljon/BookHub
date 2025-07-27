@@ -14,11 +14,11 @@ namespace BookHub.Controllers
         public NotificationsController(BookHubDbContext db) { _db = db; }
 
         [HttpGet]
-        [Authorize(Roles = "SystemAdmin,ClubManager,User")]
+        
         public IActionResult GetAll() => Ok(_db.Notifications.ToList());
 
         [HttpPost]
-        [Authorize(Roles = "SystemAdmin,ClubManager")]
+        
         public IActionResult Create([FromBody] Notification notification)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -28,7 +28,7 @@ namespace BookHub.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "SystemAdmin,ClubManager")]
+        
         public IActionResult Update(int id, [FromBody] Notification notification)
         {
             var n = _db.Notifications.Find(id);
@@ -41,7 +41,7 @@ namespace BookHub.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "SystemAdmin,ClubManager")]
+        
         public IActionResult Delete(int id)
         {
             var n = _db.Notifications.Find(id);

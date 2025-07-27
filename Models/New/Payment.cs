@@ -15,6 +15,9 @@ namespace BookHub.Models.New
         [Column("booking_id")]
         public int? BookingId { get; set; }
 
+        [ForeignKey("BookingId")]
+        public Booking Booking { get; set; }
+
         [Column("amount")]
         public decimal Amount { get; set; }
 

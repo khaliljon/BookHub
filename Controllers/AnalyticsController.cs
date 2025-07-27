@@ -14,7 +14,6 @@ namespace BookHub.Controllers
         public AnalyticsController(BookHubDbContext db) { _db = db; }
 
         [HttpGet]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
         public IActionResult GetAll() => Ok(_db.Analytics.ToList());
     }
 }

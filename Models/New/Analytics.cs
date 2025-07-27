@@ -16,6 +16,9 @@ namespace BookHub.Models.New
         [Column("user_id")]
         public int? UserId { get; set; }
 
+        [ForeignKey("UserId")]
+        public User? User { get; set; }
+
         [Column("action")]
         public string? Action { get; set; }
 

@@ -16,6 +16,12 @@ namespace BookHub.Models.New
         [Column("venue_id")]
         public int VenueId { get; set; }
 
+        [ForeignKey("VenueId")]
+        public Venue? Venue { get; set; }
+
+        // Навигация: места комнаты
+        public ICollection<Seat> Seats { get; set; } = new List<Seat>();
+
         [Column("name")]
         public string? Name { get; set; }
 

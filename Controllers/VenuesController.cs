@@ -15,12 +15,12 @@ namespace BookHub.Controllers
 
         // SystemAdmin, NetworkOwner: получить все объекты
         [HttpGet]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner")]
+        
         public IActionResult GetAll() => Ok(_db.Venues.ToList());
 
         // NetworkOwner, ClubManager: создать объект
         [HttpPost]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
+        
         public IActionResult Create([FromBody] Venue venue)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -31,7 +31,7 @@ namespace BookHub.Controllers
 
         // NetworkOwner, ClubManager: обновить объект
         [HttpPut("{id}")]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
+        
         public IActionResult Update(int id, [FromBody] Venue venue)
         {
             var v = _db.Venues.Find(id);
@@ -48,7 +48,7 @@ namespace BookHub.Controllers
 
         // SystemAdmin, NetworkOwner: удалить объект
         [HttpDelete("{id}")]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner")]
+        
         public IActionResult Delete(int id)
         {
             var v = _db.Venues.Find(id);

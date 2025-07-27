@@ -31,8 +31,15 @@ namespace BookHub.Models.New
 
         [Column("is_active")]
         public bool IsActive { get; set; } = true;
+        
+        [Required]
+        [Column("role")]
+        public string Role { get; set; } = "User";
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Навигация: бронирования пользователя
+        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }
 }

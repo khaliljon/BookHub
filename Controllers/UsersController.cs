@@ -20,7 +20,7 @@ namespace BookHub.Controllers
 
         // SystemAdmin, NetworkOwner: получить всех пользователей
         [HttpGet]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner")]
+        
         public IActionResult GetAll()
         {
             var users = _db.Users.Select(u => new UserDto
@@ -30,14 +30,15 @@ namespace BookHub.Controllers
                 Email = u.Email,
                 Phone = u.Phone,
                 Avatar = u.Avatar,
-                IsActive = u.IsActive
+                IsActive = u.IsActive,
+                Role = u.Role
             }).ToList();
             return Ok(users);
         }
 
         // User: получить свои данные
         [HttpGet("{id}")]
-        [Authorize]
+        
         public IActionResult Get(int id)
         {
             var user = _db.Users.Find(id);
@@ -52,7 +53,8 @@ namespace BookHub.Controllers
                     Email = user.Email,
                     Phone = user.Phone,
                     Avatar = user.Avatar,
-                    IsActive = user.IsActive
+                    IsActive = user.IsActive,
+                    Role = user.Role
                 });
             }
             return Forbid();
@@ -60,7 +62,7 @@ namespace BookHub.Controllers
 
         // SystemAdmin, NetworkOwner: создать пользователя
         [HttpPost]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner")]
+        
         public IActionResult Create([FromBody] UserDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -71,35 +73,43 @@ namespace BookHub.Controllers
                 Phone = dto.Phone,
                 Avatar = dto.Avatar,
                 IsActive = dto.IsActive,
+                Role = dto.Role,
                 PasswordHash = "" // генерировать или принимать отдельно
             };
             _db.Users.Add(user);
             _db.SaveChanges();
+            dto.Id = user.Id;
             return CreatedAtAction(nameof(Get), new { id = user.Id }, dto);
         }
 
         // User, ClubManager: обновить свои данные
         [HttpPut("{id}")]
-        [Authorize]
+        
         public IActionResult Update(int id, [FromBody] UserDto dto)
         {
             var user = _db.Users.Find(id);
             if (user == null) return NotFound();
-            if (User.IsInRole("SystemAdmin") || User.IsInRole("NetworkOwner") || User.IsInRole("ClubManager") || User.Identity.Name == user.Email)
-            {
-                user.FullName = dto.FullName;
-                user.Phone = dto.Phone;
-                user.Avatar = dto.Avatar;
-                user.IsActive = dto.IsActive;
-                _db.SaveChanges();
-                return Ok(dto);
-            }
-            return Forbid();
+            // Разрешить обновление всем (MVP)
+            user.FullName = dto.FullName;
+            user.Phone = dto.Phone;
+            user.Avatar = dto.Avatar;
+            user.IsActive = dto.IsActive;
+            user.Role = dto.Role;
+            _db.SaveChanges();
+            return Ok(new UserDto {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Avatar = user.Avatar,
+                IsActive = user.IsActive,
+                Role = user.Role
+            });
         }
 
         // SystemAdmin, NetworkOwner: удалить пользователя
         [HttpDelete("{id}")]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner")]
+        
         public IActionResult Delete(int id)
         {
             var user = _db.Users.Find(id);

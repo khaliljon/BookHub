@@ -14,11 +14,11 @@ namespace BookHub.Controllers
         public RoomsController(BookHubDbContext db) { _db = db; }
 
         [HttpGet]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
+        
         public IActionResult GetAll() => Ok(_db.Rooms.ToList());
 
         [HttpPost]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
+        
         public IActionResult Create([FromBody] Room room)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -28,7 +28,7 @@ namespace BookHub.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
+        
         public IActionResult Update(int id, [FromBody] Room room)
         {
             var r = _db.Rooms.Find(id);
@@ -41,7 +41,7 @@ namespace BookHub.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "SystemAdmin,NetworkOwner,ClubManager")]
+        
         public IActionResult Delete(int id)
         {
             var r = _db.Rooms.Find(id);

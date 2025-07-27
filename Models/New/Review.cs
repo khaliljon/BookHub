@@ -15,8 +15,14 @@ namespace BookHub.Models.New
         [Column("user_id")]
         public int UserId { get; set; }
 
+        [ForeignKey("UserId")]
+        public User User { get; set; }
+
         [Column("venue_id")]
         public int VenueId { get; set; }
+
+        [ForeignKey("VenueId")]
+        public Venue Venue { get; set; }
 
         [Column("rating")]
         public int Rating { get; set; }

@@ -30,6 +30,12 @@ namespace BookHub.Models.New
         [Column("owner_id")]
         public int? OwnerId { get; set; }
 
+        [ForeignKey("OwnerId")]
+        public User? Owner { get; set; }
+
+        // Навигация: комнаты заведения
+        public ICollection<Room> Rooms { get; set; } = new List<Room>();
+
         [Column("metadata")]
         public string? MetadataJson { get; set; }
 

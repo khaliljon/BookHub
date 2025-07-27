@@ -15,12 +15,12 @@ namespace BookHub.Controllers
 
         // SystemAdmin, ClubManager: получить все бронирования
         [HttpGet]
-        [Authorize(Roles = "SystemAdmin,ClubManager")]
+        
         public IActionResult GetAll() => Ok(_db.Bookings.ToList());
 
         // User: получить свои бронирования
         [HttpGet("user/{userId}")]
-        [Authorize(Roles = "User")]
+        
         public IActionResult GetByUser(int userId)
         {
             var bookings = _db.Bookings.Where(b => b.UserId == userId).ToList();
@@ -29,7 +29,7 @@ namespace BookHub.Controllers
 
         // User, ClubManager: создать бронирование
         [HttpPost]
-        [Authorize(Roles = "SystemAdmin,ClubManager,User")]
+        
         public IActionResult Create([FromBody] Booking booking)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -40,7 +40,7 @@ namespace BookHub.Controllers
 
         // User, ClubManager: обновить бронирование
         [HttpPut("{id}")]
-        [Authorize(Roles = "SystemAdmin,ClubManager,User")]
+        
         public IActionResult Update(int id, [FromBody] Booking booking)
         {
             var b = _db.Bookings.Find(id);
@@ -56,7 +56,7 @@ namespace BookHub.Controllers
 
         // SystemAdmin, ClubManager: удалить бронирование
         [HttpDelete("{id}")]
-        [Authorize(Roles = "SystemAdmin,ClubManager")]
+        
         public IActionResult Delete(int id)
         {
             var b = _db.Bookings.Find(id);

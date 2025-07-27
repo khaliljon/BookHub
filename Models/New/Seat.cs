@@ -16,6 +16,12 @@ namespace BookHub.Models.New
         [Column("room_id")]
         public int RoomId { get; set; }
 
+        [ForeignKey("RoomId")]
+        public Room? Room { get; set; }
+
+        // Навигация: бронирования места
+        public ICollection<Booking>? Bookings { get; set; }
+
         [Column("label")]
         public string? Label { get; set; }
 
@@ -25,7 +31,7 @@ namespace BookHub.Models.New
         [Column("is_active")]
         public bool IsActive { get; set; } = true;
 
-        [Column("metadata")]
+        [Column("metadata_json")]
         public string? MetadataJson { get; set; }
     }
 }

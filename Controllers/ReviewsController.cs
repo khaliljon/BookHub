@@ -14,11 +14,11 @@ namespace BookHub.Controllers
         public ReviewsController(BookHubDbContext db) { _db = db; }
 
         [HttpGet]
-        [Authorize(Roles = "SystemAdmin,ClubManager,User")]
+        
         public IActionResult GetAll() => Ok(_db.Reviews.ToList());
 
         [HttpPost]
-        [Authorize(Roles = "User")]
+        
         public IActionResult Create([FromBody] Review review)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -28,7 +28,7 @@ namespace BookHub.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "User")]
+        
         public IActionResult Update(int id, [FromBody] Review review)
         {
             var r = _db.Reviews.Find(id);
@@ -40,7 +40,7 @@ namespace BookHub.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "SystemAdmin,ClubManager")]
+        
         public IActionResult Delete(int id)
         {
             var r = _db.Reviews.Find(id);
